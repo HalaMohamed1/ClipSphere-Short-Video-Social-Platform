@@ -75,7 +75,7 @@ const videoSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational'],
+      enum: ['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational', 'others'],
       default: 'others',
     },
     duration: {
@@ -117,13 +117,10 @@ const videoSchema = new mongoose.Schema(
   }
 );
 
-// sort users profiles
 videoSchema.index({ user: 1, createdAt: -1 });
 
-//trending
 videoSchema.index({ category: 1, views: -1 });
 
-// Searching for videos
 videoSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
 videoSchema.pre('save', function (next) {

@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { UserCore as User } from '../models/User.js';
-
+import { User } from '../models/User.js'; 
 /**
  * @openapi
  * components:

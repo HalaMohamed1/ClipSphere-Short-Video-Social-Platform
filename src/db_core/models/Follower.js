@@ -25,12 +25,12 @@ const followerSchema = new mongoose.Schema(
   {
     follower: {
       type: mongoose.Schema.ObjectId,
-      ref: 'UserCore',
+      ref: 'User',
       required: [true, 'Follower is required'],
     },
     following: {
       type: mongoose.Schema.ObjectId,
-      ref: 'UserCore',
+      ref: 'User',
       required: [true, 'Following is required'],
     },
     notificationsEnabled: {

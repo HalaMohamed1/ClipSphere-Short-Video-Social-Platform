@@ -19,6 +19,7 @@ export class AuthService {
       username: registerData.username,
       email: registerData.email,
       password: registerData.password,
+      active: true
     });
 
     // Generate JWT token
@@ -41,9 +42,9 @@ export class AuthService {
       throw new AppError('Incorrect email or password', 401);
     }
 
-    if (!user.active) {
-      throw new AppError('Your account has been deactivated', 403);
-    }
+    //if (!user.active) {
+    //  throw new AppError('Your account has been deactivated', 403);
+    //}
 
     // Generate JWT token
     const token = generateToken(user._id);

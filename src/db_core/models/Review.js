@@ -33,7 +33,7 @@ const reviewSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.ObjectId,
-      ref: 'UserCore',
+      ref: 'User',
       required: [true, 'Review must belong to a user'],
     },
     video: {
