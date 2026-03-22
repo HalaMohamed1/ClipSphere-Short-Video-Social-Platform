@@ -52,7 +52,7 @@ export class ReviewController {
 
     const review = await ReviewService.getReviewById(id);
 
-    if (review.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    if (review.user._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         status: 'fail',
         message: 'You are not authorized to update this review',
