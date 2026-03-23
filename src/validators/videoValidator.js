@@ -24,8 +24,8 @@ export const createVideoSchema = z.object({
     .optional()
     .nullable(),
   category: z
-    .enum(['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational'])
-    .default('entertainment')
+    .enum(['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational', 'others'])
+    .default('others')
     .optional(),
   tags: z
     .array(z.string())
@@ -47,7 +47,7 @@ export const updateVideoSchema = z.object({
     .optional()
     .nullable(),
   category: z
-    .enum(['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational'])
+    .enum(['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational', 'others'])
     .optional(),
   status: z
     .enum(['public', 'private', 'flagged'])

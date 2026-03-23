@@ -55,25 +55,11 @@ export class VideoController {
     });
   });
 
-  // Update video (owner only)
+  // Update video (owner only; enforced by assertVideoOwner middleware)
   static updateVideo = catchAsync(async (req, res) => {
-    const { id } = req.params;
-
-    // Get video to check ownership
-    const video = await VideoService.getVideoById(id);
-
-    // Check ownership
-    if (video.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        status: 'fail',
-        message: 'You are not authorized to update this video',
-      });
-    }
-
-    // Validate input with Zod
     const validatedData = updateVideoSchema.parse(req.body);
 
-    const updatedVideo = await VideoService.updateVideo(id, validatedData);
+    const updatedVideo = await VideoService.updateVideo(req.video._id, validatedData);
 
     res.status(200).json({
       status: 'success',
@@ -82,22 +68,9 @@ export class VideoController {
     });
   });
 
-  // Delete video (owner or admin)
+  // Delete video (owner or admin; enforced by assertVideoOwnerOrAdminDelete middleware)
   static deleteVideo = catchAsync(async (req, res) => {
-    const { id } = req.params;
-
-    // Get video to check ownership
-    const video = await VideoService.getVideoById(id);
-
-    // Check ownership
-    if (video.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        status: 'fail',
-        message: 'You are not authorized to delete this video',
-      });
-    }
-
-    await VideoService.deleteVideo(id);
+    await VideoService.deleteVideo(req.video._id);
 
     res.status(200).json({
       status: 'success',

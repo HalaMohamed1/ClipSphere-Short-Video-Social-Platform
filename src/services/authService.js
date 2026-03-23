@@ -94,9 +94,11 @@ export class AuthService {
     return user;
   }
 
-  // Get user by ID (public profile)
+  // Get user by ID (public profile — no email, password, or notification preferences)
   static async getUserProfile(userId) {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select(
+      '-password -email -notificationPreferences -active'
+    );
     if (!user) {
       throw new AppError('User not found', 404);
     }
@@ -111,9 +113,11 @@ export class AuthService {
     }
 
     if (preferences.notificationPreferences) {
+      const inc = preferences.notificationPreferences;
+      const cur = user.notificationPreferences || {};
       user.notificationPreferences = {
-        ...user.notificationPreferences,
-        ...preferences.notificationPreferences,
+        inApp: { ...(cur.inApp || {}), ...(inc.inApp || {}) },
+        email: { ...(cur.email || {}), ...(inc.email || {}) },
       };
     }
 

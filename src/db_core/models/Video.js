@@ -75,7 +75,7 @@ const videoSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational'],
+      enum: ['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational', 'others'],
       default: 'others',
     },
     duration: {

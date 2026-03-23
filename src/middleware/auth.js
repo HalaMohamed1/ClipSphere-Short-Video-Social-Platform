@@ -19,9 +19,11 @@ export const protect = async (req, res, next) => {
 
     // Check if user still exists and is active
     const user = await User.findById(decoded.id).select('-password');
-    //if (!user || !user.active) {
-    //  return next(new AppError('The user belonging to this token no longer exists or is inactive.', 401));
-    //}
+    if (!user) {
+      return next(
+        new AppError('The user belonging to this token no longer exists. Please log in again.', 401)
+      );
+    }
 
     req.user = user;
     next();
@@ -36,25 +38,14 @@ export const protect = async (req, res, next) => {
   }
 };
 
-// restrictTo middleware: Restrict access by role
+// restrictTo middleware: Restrict access by role (use after protect)
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
-    //if (!roles.includes(req.user.role)) {
-    //  return next(
-    //    new AppError('You do not have permission to perform this action.', 403)
-    //  );
-    //}
-    next();
-  };
-};
-
-// Ownership check: Ensure user owns the resource
-export const checkOwnership = (resourceOwnerId) => {
-  return (req, res, next) => {
-    if (req.user.id !== resourceOwnerId.toString() && req.user.role !== 'admin') {
-      return next(
-        new AppError('You are not authorized to perform this action on this resource.', 403)
-      );
+    if (!req.user) {
+      return next(new AppError('You are not logged in! Please log in to get access.', 401));
+    }
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('You do not have permission to perform this action.', 403));
     }
     next();
   };
