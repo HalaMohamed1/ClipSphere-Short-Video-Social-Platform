@@ -57,10 +57,3 @@ export const swaggerOptions = {
   },
   apis: ['./src/db_core/models/*.js', './src/db_core/validators/*.js'], 
 };
-
-/**
- * usage instructions:
- * 1. import `swaggerOptions` in your Express entry file (e.g., src/index.js).
- * 2. pass it to `swaggerJsdoc()`.
- * 3. use `swaggerUi` middleware to expose `/api-docs`.
- */
