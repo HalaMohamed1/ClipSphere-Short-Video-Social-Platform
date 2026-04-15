@@ -1,5 +1,6 @@
 import React from "react";
 import Navbar from "../components/Navbar";
+import "./globals.css";
 
 export const metadata = {
   title: "ClipSphere | Short Video Social Platform",
