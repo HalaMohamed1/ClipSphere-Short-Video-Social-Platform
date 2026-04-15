@@ -53,19 +53,22 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============= MIDDLEWARE =============
 
-// Enable CORS for frontend (allow requests from localhost:3000)
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// CORS: explicit origin so browsers can send credentials (cookies) with uploads / auth
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  })
+);
 
 // Request logging
 app.use(morgan('combined'));
@@ -134,6 +137,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/upload', uploadRoutes);
 
 // ============= ERROR HANDLING =============
 
@@ -145,14 +149,11 @@ app.use(globalErrorHandler);
 
 // ============= SERVER STARTUP =============
 
-const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
-
-    // Start listening
-    app.listen(PORT, () => {
-      console.log(`
+const startServer = () => {
+  // Listen first so port 5000 is open immediately (Next.js proxy / health checks).
+  // If we await MongoDB before listen(), a slow or down DB means ECONNREFUSED — not a "port conflict".
+  const server = app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`
 ╔════════════════════════════════════════╗
 ║   ClipSphere Backend Server Started    ║
 ╠════════════════════════════════════════╣
@@ -160,12 +161,19 @@ const startServer = async () => {
 ║  ENV:      ${process.env.NODE_ENV}
 ║  API Docs: http://localhost:${PORT}/api-docs
 ╚════════════════════════════════════════╝
-      `);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error.message);
+    `);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use. Stop the other process or set PORT in .env`);
+    } else {
+      console.error('❌ Server listen error:', err.message);
+    }
     process.exit(1);
-  }
+  });
+
+  connectDB();
 };
 
 // Handle unhandled promise rejections

@@ -23,13 +23,5 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-700 rounded-full hover:bg-gray-600;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-900;
-}
-
-::-webkit-scrollbar-thumb {
   @apply bg-purple-600 rounded-full hover:bg-purple-500;
 }

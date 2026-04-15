@@ -42,9 +42,12 @@ export default function Navbar() {
               <div className="h-8 w-8 rounded-full border-2 border-t-white border-white/10 animate-spin" />
             ) : user ? (
               <div className="flex items-center gap-4">
-                <button className="hidden sm:block text-sm font-semibold text-white transition-colors hover:text-gray-100 px-5 py-2">
+                <Link
+                  href="/upload"
+                  className="hidden sm:block text-sm font-medium text-white/80 hover:text-white transition-colors bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full"
+                >
                   Upload
-                </button>
+                </Link>
                 <div className="relative group flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full p-[2px] bg-gradient-to-tr from-gray-700 to-gray-900 cursor-pointer shadow-lg border-2 border-white/40 hover:border-white/60 transition-colors">
                     <img
