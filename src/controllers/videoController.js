@@ -77,4 +77,38 @@ export class VideoController {
       message: 'Video deleted successfully',
     });
   });
+
+  // Get trending feed (sorted by views, rating, and recency)
+  static getTrendingFeed = catchAsync(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await VideoService.getTrendingFeed({
+      page,
+      limit,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Trending videos retrieved successfully',
+      data: result,
+    });
+  });
+
+  // Get following feed (videos from users this user follows)
+  static getFollowingFeed = catchAsync(async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const result = await VideoService.getFollowingFeed(req.user._id, {
+      page,
+      limit,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Following feed retrieved successfully',
+      data: result,
+    });
+  });
 }

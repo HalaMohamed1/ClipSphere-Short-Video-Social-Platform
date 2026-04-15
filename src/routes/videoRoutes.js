@@ -10,6 +10,10 @@ import {
 
 const router = express.Router();
 
+// Feed routes (must come before /:id to avoid route conflicts)
+router.get('/feed/trending', VideoController.getTrendingFeed);
+router.get('/feed/following', protect, VideoController.getFollowingFeed);
+
 router.post('/', protect, VideoController.createVideo);
 router.get('/', VideoController.getPublicVideos);
 router.get('/:id', VideoController.getVideoById);

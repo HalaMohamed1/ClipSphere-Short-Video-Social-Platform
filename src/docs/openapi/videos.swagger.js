@@ -84,6 +84,132 @@
 
 /**
  * @swagger
+ * /api/v1/videos/feed/trending:
+ *   get:
+ *     summary: Get trending videos (sorted by views, rating, and recency)
+ *     description: Returns all public videos sorted by engagement metrics. No authentication required.
+ *     tags: [Videos]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination (default 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of videos per page (default 20)
+ *     responses:
+ *       200:
+ *         description: Trending videos with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videos:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           views:
+ *                             type: number
+ *                           likesCount:
+ *                             type: number
+ *                           averageRating:
+ *                             type: number
+ *                           user:
+ *                             type: object
+ *                             properties:
+ *                               username:
+ *                                 type: string
+ *                               avatarKey:
+ *                                 type: string
+ *                     totalCount:
+ *                       type: number
+ *                       description: Total number of videos available
+ *                     page:
+ *                       type: number
+ *                       description: Current page number
+ *                     pageSize:
+ *                       type: number
+ *                       description: Number of videos per page
+ *                     hasMore:
+ *                       type: boolean
+ *                       description: Whether more videos are available
+ */
+
+/**
+ * @swagger
+ * /api/v1/videos/feed/following:
+ *   get:
+ *     summary: Get following feed (videos from users you follow)
+ *     description: Returns videos only from users that the authenticated user follows.
+ *     tags: [Videos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination (default 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of videos per page (default 20)
+ *     responses:
+ *       200:
+ *         description: Following feed with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     videos:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     totalCount:
+ *                       type: number
+ *                       description: Total number of videos available
+ *                     page:
+ *                       type: number
+ *                       description: Current page number
+ *                     pageSize:
+ *                       type: number
+ *                       description: Number of videos per page
+ *                     hasMore:
+ *                       type: boolean
+ *                       description: Whether more videos are available
+ *       401:
+ *         description: Unauthorized - JWT token required
+ */
+
+/**
+ * @swagger
  * /api/v1/videos/{id}:
  *   get:
  *     summary: Get a video by ID
