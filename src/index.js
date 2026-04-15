@@ -39,6 +39,7 @@ console.log(`✅ PORT: ${process.env.PORT}`);
 
 // Now import other modules
 import express from 'express';
+import cors from 'cors';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 import swaggerJsdoc from 'swagger-jsdoc';
@@ -57,6 +58,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============= MIDDLEWARE =============
+
+// Enable CORS for frontend (allow requests from localhost:3000)
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Request logging
 app.use(morgan('combined'));

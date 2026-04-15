@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/20112/Downloads/courses/Web%20Development/WebProject/ClipSphere-Short-Video-Social-Platform/nextjs-frontend/app/register/page.tsx"],"sourcesContent":["'use client';\r\n\r\nimport { useRouter } from 'next/navigation';\r\nimport { useEffect } from 'react';\r\n\r\nexport default function Register() {\r\n  const router = useRouter();\r\n\r\n  useEffect(() => {\r\n    // Redirect to signup page\r\n    router.replace('/signup');\r\n  }, [router]);\r\n\r\n  return null;\r\n}\r\n"],"names":["Register","router","replace"],"mappings":";;;;AAEA;AACA;AAHA;;;AAKe,SAASA;IACtB,MAAMC,SAAS,IAAA,qKAAS;IAExB,IAAA,wOAAS,EAAC;QACR,0BAA0B;QAC1BA,OAAOC,OAAO,CAAC;IACjB,GAAG;QAACD;KAAO;IAEX,OAAO;AACT"}}]
+}
