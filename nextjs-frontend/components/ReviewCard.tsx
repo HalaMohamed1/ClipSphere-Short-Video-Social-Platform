@@ -26,14 +26,17 @@ interface ReviewCardProps {
 
 export default function ReviewCard({
   review,
-  videoOwnerId,
   onDelete,
   onEdit,
 }: ReviewCardProps) {
   const { user } = useAuth();
-  const isOwner = user?._id === review.user._id;
+  const isReviewAuthor = Boolean(
+    user && String(user._id) === String(review.user._id)
+  );
   const isAdmin = user?.role === "admin";
-  const canEdit = isOwner || isAdmin;
+  /** SWAPD352 / API: delete = author or admin; update review = author only */
+  const canEdit = isReviewAuthor;
+  const canDelete = isReviewAuthor || isAdmin;
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -50,10 +53,10 @@ export default function ReviewCard({
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/8 transition-colors">
+    <div className="bg-zinc-900/40 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-rose-500 flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-zinc-200 font-medium text-sm">
             {review.user.username.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -62,21 +65,26 @@ export default function ReviewCard({
           </div>
         </div>
 
-        {/* Edit and Delete buttons - visible only to owner or admin */}
-        {canEdit && (
+        {(canEdit || canDelete) && (
           <div className="flex gap-2">
-            <button
-              onClick={() => onEdit?.(review._id)}
-              className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={handleDelete}
-              className="text-xs px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-            >
-              Delete
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit?.(review._id)}
+                className="text-xs px-2 py-1 rounded border border-zinc-600 text-zinc-300 hover:bg-zinc-800 transition-colors"
+              >
+                Edit
+              </button>
+            )}
+            {canDelete && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="text-xs px-2 py-1 rounded border border-red-900/50 text-red-400/90 hover:bg-red-950/40 transition-colors"
+              >
+                Delete
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/appError.js';
-import { User } from '../models/User.js';
+import { User } from '../db_core/models/User.js';
 
 // Protect middleware: Verify JWT and set req.user
 export const protect = async (req, res, next) => {
@@ -8,6 +8,8 @@ export const protect = async (req, res, next) => {
 
   if (req.headers.authorization?.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
   }
 
   if (!token) {
@@ -36,6 +38,31 @@ export const protect = async (req, res, next) => {
     }
     next(error);
   }
+};
+
+/**
+ * Sets req.user when a valid JWT is present; otherwise continues without error.
+ * Used for media routes where public content must work without a cookie.
+ */
+export const optionalAuth = async (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+    if (user) req.user = user;
+  } catch {
+    // ignore invalid/expired token for optional auth
+  }
+  next();
 };
 
 // restrictTo middleware: Restrict access by role (use after protect)

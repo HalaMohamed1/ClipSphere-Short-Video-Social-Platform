@@ -1,7 +1,7 @@
 import { catchAsync } from '../utils/catchAsync.js';
-import { AppError } from '../utils/appError.js';
 import { AuthService } from '../services/authService.js';
 import { registerSchema, loginSchema, updateUserSchema, updatePreferencesSchema } from '../validators/authValidator.js';
+import { getAuthCookieOptions } from '../utils/authCookie.js';
 
 export class AuthController {
   // Register user
@@ -10,6 +10,8 @@ export class AuthController {
     const validatedData = registerSchema.parse(req.body);
 
     const { user, token } = await AuthService.register(validatedData);
+
+    res.cookie('token', token, getAuthCookieOptions());
 
     res.status(201).json({
       status: 'success',
@@ -28,6 +30,8 @@ export class AuthController {
 
     const { user, token } = await AuthService.login(validatedData);
 
+    res.cookie('token', token, getAuthCookieOptions());
+
     res.status(200).json({
       status: 'success',
       message: 'Logged in successfully',
@@ -35,6 +39,14 @@ export class AuthController {
         user,
         token,
       },
+    });
+  });
+
+  static logout = catchAsync(async (req, res) => {
+    res.clearCookie('token', { path: '/', httpOnly: true, sameSite: 'lax' });
+    res.status(200).json({
+      status: 'success',
+      message: 'Logged out successfully',
     });
   });
 

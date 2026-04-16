@@ -14,20 +14,25 @@ export const loadVideo = catchAsync(async (req, res, next) => {
   next();
 });
 
-/** PATCH: only the video owner may update (admins cannot override). */
+function getVideoOwnerId(req) {
+  return req.video.user._id ? req.video.user._id : req.video.user;
+}
+
+function isVideoOwner(req) {
+  return getVideoOwnerId(req).toString() === req.user._id.toString();
+}
+
+/** PATCH: owner only (SWAPD352 — admin bypass applies to delete, not editing others' videos). */
 export const assertVideoOwner = (req, res, next) => {
-  const ownerId = req.video.user._id ? req.video.user._id : req.video.user;
-  if (ownerId.toString() !== req.user._id.toString()) {
+  if (!isVideoOwner(req)) {
     return next(new AppError('You are not authorized to update this video', 403));
   }
   next();
 };
 
-/** DELETE: owner or platform admin. */
-export const assertVideoOwnerOrAdminDelete = (req, res, next) => {
-  const ownerId = req.video.user._id ? req.video.user._id : req.video.user;
-  const isOwner = ownerId.toString() === req.user._id.toString();
-  if (!isOwner && req.user.role !== 'admin') {
+/** DELETE: owner or platform admin (moderation). */
+export const assertVideoOwnerOrAdmin = (req, res, next) => {
+  if (!isVideoOwner(req) && req.user.role !== 'admin') {
     return next(new AppError('You are not authorized to delete this video', 403));
   }
   next();

@@ -33,7 +33,8 @@ export class ReviewService {
         video.user,
         'review',
         reviewer?.username || 'Someone',
-        video.title
+        video.title,
+        reviewData.video.toString()
       );
     }
 

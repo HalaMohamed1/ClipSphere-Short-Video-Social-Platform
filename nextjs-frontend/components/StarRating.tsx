@@ -41,8 +41,8 @@ export default function StarRating({
           <svg
             className={`${sizeClass} ${
               star <= (hoveredRating || value)
-                ? "fill-yellow-400 text-yellow-400"
-                : "fill-white/20 text-white/20"
+                ? "fill-zinc-300 text-zinc-300"
+                : "fill-zinc-800 text-zinc-700"
             } transition-colors`}
             viewBox="0 0 20 20"
           >

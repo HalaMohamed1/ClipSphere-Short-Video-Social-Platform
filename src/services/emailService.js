@@ -25,7 +25,7 @@ const emailTemplates = {
     `,
   }),
   
-  newEngagement: (recipientName, engagementType, engagerName, videoTitle) => ({
+  newEngagement: (recipientName, engagementType, engagerName, videoTitle, videoId) => ({
     subject: `${engagerName} ${engagementType === 'like' ? 'liked' : 'reviewed'} your video on ClipSphere!`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -41,7 +41,7 @@ const emailTemplates = {
           <p>They loved your video! Keep creating great content.</p>
         `}
         <p style="margin-top: 30px;">
-          <a href="${process.env.CLIENT_URL || 'https://clipsphere.app'}/video/${encodeURIComponent(videoTitle)}" 
+          <a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/video/${encodeURIComponent(videoId || '')}" 
              style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
             View Video
           </a>
@@ -118,10 +118,23 @@ export class EmailService {
     }
   }
 
-  static async sendEngagementEmail(recipientEmail, recipientName, engagementType, engagerName, videoTitle) {
+  static async sendEngagementEmail(
+    recipientEmail,
+    recipientName,
+    engagementType,
+    engagerName,
+    videoTitle,
+    videoId
+  ) {
     try {
       const transporter = await this.initializeTransporter();
-      const template = emailTemplates.newEngagement(recipientName, engagementType, engagerName, videoTitle);
+      const template = emailTemplates.newEngagement(
+        recipientName,
+        engagementType,
+        engagerName,
+        videoTitle,
+        videoId
+      );
 
       const mailOptions = {
         from: process.env.EMAIL_FROM || 'noreply@clipsphere.app',

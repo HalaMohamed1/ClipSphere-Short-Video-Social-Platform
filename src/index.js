@@ -41,6 +41,8 @@ console.log(`✅ PORT: ${process.env.PORT}`);
 import express from 'express';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
@@ -60,6 +62,19 @@ const PORT = process.env.PORT || 5000;
 
 // Request logging
 app.use(morgan('combined'));
+
+const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: clientOrigins.length ? clientOrigins : true,
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));

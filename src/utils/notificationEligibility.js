@@ -3,6 +3,7 @@ const DEFAULT_IN_APP = {
   comments: true,
   likes: true,
   tips: true,
+  welcome: true,
 };
 
 const DEFAULT_EMAIL = {
@@ -10,6 +11,7 @@ const DEFAULT_EMAIL = {
   comments: false,
   likes: false,
   tips: false,
+  welcome: true,
 };
 
 export function resolveNotificationChannels(targetUser, eventKey) {

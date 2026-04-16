@@ -59,15 +59,19 @@ const videoSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Video must belong to a user'],
     },
+    /** MinIO object key (private bucket). Use with presigned GET. */
+    videoKey: {
+      type: String,
+      default: null,
+    },
+    thumbnailKey: {
+      type: String,
+      default: null,
+    },
+    /** Legacy / external URL, or redundant when videoKey is set (resolved via presign in API). */
     videoUrl: {
       type: String,
-      required: [true, 'Please provide a video URL'],
-      validate: {
-        validator: function(v) {
-          return /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(v);
-        },
-        message: props => `${props.value} is not a valid video URL.`
-      }
+      default: null,
     },
     thumbnailUrl: {
       type: String,
@@ -117,6 +121,12 @@ const videoSchema = new mongoose.Schema(
   }
 );
 
+videoSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'video',
+});
+
 // sort users profiles
 videoSchema.index({ user: 1, createdAt: -1 });
 
@@ -125,6 +135,17 @@ videoSchema.index({ category: 1, views: -1 });
 
 // Searching for videos
 videoSchema.index({ title: 'text', description: 'text', tags: 'text' });
+
+videoSchema.pre('validate', function (next) {
+  if (!this.videoKey && !this.videoUrl) {
+    return next(new Error('Video must have either videoKey (upload) or videoUrl'));
+  }
+  if (this.videoUrl && !this.videoKey) {
+    const ok = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(this.videoUrl);
+    if (!ok) return next(new Error('Invalid video URL'));
+  }
+  next();
+});
 
 videoSchema.pre('save', function (next) {
   if (!this.isModified('title')) return next();

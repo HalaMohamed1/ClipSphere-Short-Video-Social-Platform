@@ -1,49 +1,68 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const RAW = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || "";
+const API_BASE = (
+  RAW
+    ? RAW.replace(/\/$/, "")
+    : "http://localhost:5000/api/v1"
+).replace(/\/api\/?v1$/i, "") + "/api/v1";
 
 export interface ApiResponse<T> {
-  status: 'success' | 'fail' | 'error';
+  status: "success" | "fail" | "error";
   message?: string;
   data?: T;
+}
+
+function buildUrl(endpoint: string) {
+  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  return `${API_BASE}${path}`;
 }
 
 export async function apiCall<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
+  const url = buildUrl(endpoint);
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData;
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    credentials: "include",
+    headers: isFormData
+      ? { ...(options.headers as Record<string, string>) }
+      : {
+          "Content-Type": "application/json",
+          ...(options.headers as Record<string, string>),
+        },
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || `API Error: ${response.status}`);
+    let message = `API Error: ${response.status}`;
+    try {
+      const err = await response.json();
+      message = err.message || message;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(message);
   }
 
   const result: ApiResponse<T> = await response.json();
   return result.data as T;
 }
 
+/** Same as apiCall; adds Bearer when token is provided (cookie auth is used regardless). */
 export async function apiCallWithAuth<T>(
   endpoint: string,
-  token: string | null,
+  token: string | null | undefined,
   options: RequestInit = {}
 ): Promise<T> {
-  const headers: HeadersInit = {
-    ...options.headers,
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
   };
-
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
-
-  return apiCall<T>(endpoint, {
-    ...options,
-    headers,
-  });
+  return apiCall<T>(endpoint, { ...options, headers });
 }
+
+export { API_BASE };

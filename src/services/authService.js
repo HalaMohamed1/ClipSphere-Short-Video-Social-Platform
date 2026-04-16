@@ -1,6 +1,7 @@
-import { User } from '../models/User.js';
+import { User } from '../db_core/models/User.js';
 import { AppError } from '../utils/appError.js';
 import { generateToken } from '../middleware/auth.js';
+import { sendWelcomeNotification } from '../utils/engagementNotificationUtil.js';
 
 export class AuthService {
   // Register new user
@@ -24,6 +25,10 @@ export class AuthService {
 
     // Generate JWT token
     const token = generateToken(user._id);
+
+    sendWelcomeNotification(user._id).catch((err) =>
+      console.error('sendWelcomeNotification failed:', err)
+    );
 
     return {
       user: user.toJSON(),

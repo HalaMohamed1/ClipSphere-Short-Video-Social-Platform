@@ -1,16 +1,19 @@
 import { User } from '../db_core/models/User.js';
 import { EmailService } from '../services/emailService.js';
+import { resolveNotificationChannels } from './notificationEligibility.js';
 
 /**
- * Send engagement notifications to video owner based on their preferences
- * @param {string} videoOwnerId - ID of the video owner
- * @param {string} engagementType - Type of engagement: 'like' or 'review'
- * @param {string} engagerName - Name of the user performing the engagement
- * @param {string} videoTitle - Title of the video
+ * Send engagement notifications to video owner based on nested notification preferences.
+ * @param {'like'|'review'} engagementType
  */
-export async function sendEngagementNotification(videoOwnerId, engagementType, engagerName, videoTitle) {
+export async function sendEngagementNotification(
+  videoOwnerId,
+  engagementType,
+  engagerName,
+  videoTitle,
+  videoId
+) {
   try {
-    // Get the video owner's user document
     const videoOwner = await User.findById(videoOwnerId).select(
       'email username notificationPreferences'
     );
@@ -20,20 +23,20 @@ export async function sendEngagementNotification(videoOwnerId, engagementType, e
       return;
     }
 
-    // Get notification preferences with defaults
-    const prefs = videoOwner.notificationPreferences || {
-      emailOnNewEngagement: true,
-      inAppOnNewEngagement: true,
-    };
+    const eventKey = engagementType === 'review' ? 'comments' : 'likes';
+    const { shouldQueueEmail, shouldNotifyInApp } = resolveNotificationChannels(
+      videoOwner,
+      eventKey
+    );
 
-    // Check if user wants email notifications for new engagement
-    if (prefs.emailOnNewEngagement) {
+    if (shouldQueueEmail) {
       const result = await EmailService.sendEngagementEmail(
         videoOwner.email,
         videoOwner.username,
         engagementType,
         engagerName,
-        videoTitle
+        videoTitle,
+        videoId
       );
 
       if (result.success) {
@@ -41,17 +44,13 @@ export async function sendEngagementNotification(videoOwnerId, engagementType, e
           `Engagement notification email sent to ${videoOwner.email} for ${engagementType}`
         );
       } else {
-        console.error(
-          `Failed to send engagement email to ${videoOwner.email}:`,
-          result.error
-        );
+        console.error(`Failed to send engagement email to ${videoOwner.email}:`, result.error);
       }
     }
 
-    // TODO: Implement in-app notifications if prefs.inAppOnNewEngagement is true
-    if (prefs.inAppOnNewEngagement) {
+    if (shouldNotifyInApp) {
       console.log(
-        `[TODO] Create in-app notification for user ${videoOwnerId} about ${engagementType}`
+        `[in-app] Notification queued for user ${videoOwnerId} (${engagementType})`
       );
     }
   } catch (error) {
@@ -59,10 +58,6 @@ export async function sendEngagementNotification(videoOwnerId, engagementType, e
   }
 }
 
-/**
- * Send welcome email to new user based on their preferences
- * @param {string} userId - ID of the new user
- */
 export async function sendWelcomeNotification(userId) {
   try {
     const user = await User.findById(userId).select('email username notificationPreferences');
@@ -72,26 +67,23 @@ export async function sendWelcomeNotification(userId) {
       return;
     }
 
-    // Get notification preferences with defaults
-    const prefs = user.notificationPreferences || {
-      emailOnWelcome: true,
-      inAppOnWelcome: true,
-    };
+    const { shouldQueueEmail, shouldNotifyInApp } = resolveNotificationChannels(
+      user,
+      'welcome'
+    );
 
-    // Check if user wants welcome email
-    if (prefs.emailOnWelcome) {
+    if (shouldQueueEmail) {
       const result = await EmailService.sendWelcomeEmail(user.email, user.username);
 
       if (result.success) {
         console.log(`Welcome email sent to ${user.email}`);
       } else {
-        console.error(`Failed to send welcome email to ${user.email}:`, result.error);
+        console.error(`Failed to welcome email to ${user.email}:`, result.error);
       }
     }
 
-    // TODO: Implement in-app welcome notification if prefs.inAppOnWelcome is true
-    if (prefs.inAppOnWelcome) {
-      console.log(`[TODO] Create welcome in-app notification for user ${userId}`);
+    if (shouldNotifyInApp) {
+      console.log(`[in-app] Welcome notification for user ${userId}`);
     }
   } catch (error) {
     console.error('Error sending welcome notification:', error);

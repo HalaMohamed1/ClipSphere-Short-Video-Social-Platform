@@ -1,4 +1,5 @@
-import React from "react";
+import React, { Suspense } from "react";
+import "./globals.css";
 import Navbar from "../components/Navbar";
 
 export const metadata = {
@@ -13,13 +14,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-[#050505] min-h-screen text-gray-100 font-sans antialiased selection:bg-purple-500/30 selection:text-white overflow-x-hidden">
-        <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-[-1] pointer-events-none">
-          <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/10 blur-[150px]"></div>
-          <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-rose-900/10 blur-[150px]"></div>
-        </div>
-
-        <Navbar />
+      <body className="bg-zinc-950 min-h-screen text-zinc-100 font-sans antialiased selection:bg-zinc-700 selection:text-white overflow-x-hidden">
+        <Suspense
+          fallback={
+            <nav className="fixed w-full z-50 top-0 start-0 h-16 bg-zinc-950 border-b border-zinc-800" />
+          }
+        >
+          <Navbar />
+        </Suspense>
         
         <main className="pt-24 pb-16 min-h-screen">
           {children}

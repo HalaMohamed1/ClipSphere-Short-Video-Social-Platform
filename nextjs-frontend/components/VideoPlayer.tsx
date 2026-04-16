@@ -8,6 +8,17 @@ interface VideoPlayerProps {
   onViewIncrement?: () => void;
 }
 
+/** Platform max clip is 5m; clips under 3s never reached old "3s watch" rule — qualify at min(3s, ~half clip). */
+function viewWatchThresholdSec(durationSec: number): number {
+  if (!durationSec || !Number.isFinite(durationSec) || durationSec <= 0) {
+    return 3;
+  }
+  if (durationSec < 3) {
+    return Math.max(0.2, durationSec * 0.45);
+  }
+  return 3;
+}
+
 export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -16,23 +27,38 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
   const [volume, setVolume] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [viewCounted, setViewCounted] = useState(false);
+  const incrementRef = useRef(onViewIncrement);
+  incrementRef.current = onViewIncrement;
 
-  // Increment view count after 3 seconds of play
   useEffect(() => {
-    if (isPlaying && currentTime >= 3 && !viewCounted && onViewIncrement) {
-      onViewIncrement();
+    setViewCounted(false);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [src]);
+
+  useEffect(() => {
+    if (!isPlaying || viewCounted || !incrementRef.current) return;
+    const d =
+      duration ||
+      (Number.isFinite(videoRef.current?.duration) ? videoRef.current!.duration : 0);
+    const need = viewWatchThresholdSec(d);
+    if (currentTime >= need) {
+      incrementRef.current();
       setViewCounted(true);
     }
-  }, [isPlaying, currentTime, viewCounted, onViewIncrement]);
+  }, [isPlaying, currentTime, duration, viewCounted]);
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+  const togglePlay = async () => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (el.paused) {
+      try {
+        await el.play();
+      } catch {
+        setIsPlaying(false);
       }
-      setIsPlaying(!isPlaying);
+    } else {
+      el.pause();
     }
   };
 
@@ -74,12 +100,14 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
   };
 
   return (
-    <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video">
+    <div className="relative w-full bg-black rounded-lg overflow-hidden border border-zinc-800 aspect-video">
       <video
         ref={videoRef}
         src={src}
         poster={thumbnail}
         onClick={togglePlay}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={() => setIsPlaying(false)}
@@ -88,9 +116,9 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
 
       {/* Play/Pause Overlay */}
       {!isPlaying && (
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors" onClick={togglePlay}>
-          <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center hover:bg-white/30 transition-colors">
-            <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors" onClick={togglePlay}>
+          <div className="w-16 h-16 rounded-full bg-zinc-100/90 border border-zinc-300 flex items-center justify-center hover:bg-white transition-colors">
+            <svg className="w-8 h-8 text-zinc-900 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
             </svg>
           </div>
@@ -98,7 +126,7 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
       )}
 
       {/* Controls Bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4 translate-y-full group-hover:translate-y-0 hover:translate-y-0 transition-transform duration-200">
+      <div className="absolute bottom-0 left-0 right-0 bg-zinc-950/95 border-t border-zinc-800 p-3 translate-y-full group-hover:translate-y-0 hover:translate-y-0 transition-transform duration-200">
         {/* Progress Bar */}
         <div className="mb-3">
           <input
@@ -107,11 +135,11 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
             max={duration || 0}
             value={currentTime}
             onChange={handleProgressBarChange}
-            className="w-full h-1 bg-white/20 rounded-full cursor-pointer appearance-none accent-purple-500"
+            className="w-full h-1 bg-zinc-800 rounded-full cursor-pointer appearance-none accent-zinc-400"
             style={{
-              background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${
+              background: `linear-gradient(to right, rgb(161, 161, 170) 0%, rgb(161, 161, 170) ${
                 duration ? (currentTime / duration) * 100 : 0
-              }%, rgba(255, 255, 255, 0.2) ${duration ? (currentTime / duration) * 100 : 0}%, rgba(255, 255, 255, 0.2) 100%)`,
+              }%, rgb(39 39 42) ${duration ? (currentTime / duration) * 100 : 0}%, rgb(39 39 42) 100%)`,
             }}
           />
         </div>
@@ -155,7 +183,7 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
                   setVolume(newVolume);
                   if (videoRef.current) videoRef.current.volume = newVolume;
                 }}
-                className="w-0 group-hover/volume:w-16 h-1 bg-white/20 rounded-full opacity-0 group-hover/volume:opacity-100 transition-all appearance-none accent-purple-500"
+                className="w-0 group-hover/volume:w-16 h-1 bg-zinc-800 rounded-full opacity-0 group-hover/volume:opacity-100 transition-all appearance-none accent-zinc-400"
               />
             </div>
 

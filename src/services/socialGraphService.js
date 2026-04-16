@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { User } from '../models/User.js';
-import { Follower } from '../models/Follower.js';
+import { User } from '../db_core/models/User.js';
+import { Follower } from '../db_core/models/Follower.js';
 import { AppError } from '../utils/appError.js';
 import { resolveNotificationChannels } from '../utils/notificationEligibility.js';
 

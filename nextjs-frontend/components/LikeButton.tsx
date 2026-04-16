@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { apiCallWithAuth } from "../lib/api";
+import { apiCall } from "../lib/api";
 
 interface LikeButtonProps {
   videoId: string;
@@ -17,7 +17,7 @@ export default function LikeButton({
   initialLiked = false,
   initialCount = 0,
 }: LikeButtonProps) {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,21 +37,13 @@ export default function LikeButton({
     try {
       if (isLiked) {
         // Unlike
-        await apiCallWithAuth(
-          `/videos/${videoId}/like`,
-          token,
-          { method: "DELETE" }
-        );
+        await apiCall(`/videos/${videoId}/like`, { method: "DELETE" });
         setIsLiked(false);
         setLikeCount(Math.max(0, likeCount - 1));
         onLikeChange?.(false, Math.max(0, likeCount - 1));
       } else {
         // Like
-        await apiCallWithAuth(
-          `/videos/${videoId}/like`,
-          token,
-          { method: "POST" }
-        );
+        await apiCall(`/videos/${videoId}/like`, { method: "POST" });
         setIsLiked(true);
         setLikeCount(likeCount + 1);
         onLikeChange?.(true, likeCount + 1);
@@ -68,10 +60,10 @@ export default function LikeButton({
     <button
       onClick={handleLikeClick}
       disabled={isLoading}
-      className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200 ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors duration-200 ${
         isLiked
-          ? "bg-rose-500/20 text-rose-400 border border-rose-500/50 hover:bg-rose-500/30"
-          : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
+          ? "bg-zinc-800 text-zinc-100 border border-zinc-600 hover:bg-zinc-700"
+          : "bg-zinc-900 text-zinc-200 border border-zinc-800 hover:bg-zinc-800"
       } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
       <svg

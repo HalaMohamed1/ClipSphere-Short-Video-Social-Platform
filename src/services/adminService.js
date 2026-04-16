@@ -1,6 +1,7 @@
-import { User } from '../models/User.js';
+import { User } from '../db_core/models/User.js';
 import { Video } from '../db_core/models/Video.js';
 import { AppError } from '../utils/appError.js';
+import { attachMediaUrlsMany } from './videoService.js';
 
 export class AdminService {
   static async getStats() {
@@ -96,7 +97,7 @@ export class AdminService {
         ]);
 
       return {
-        flaggedVideos,
+        flaggedVideos: attachMediaUrlsMany(flaggedVideos),
         totalFlaggedVideos,
         flaggedUsers,
         totalFlaggedUsers,

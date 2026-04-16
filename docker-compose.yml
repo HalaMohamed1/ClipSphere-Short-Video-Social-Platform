@@ -49,9 +49,9 @@ services:
         mc mb local/clipsphere-thumbnails --ignore-existing
         mc cors set local/clipsphere-videos /config/cors.json
         mc cors set local/clipsphere-thumbnails /config/cors.json
-        mc anonymous set download local/clipsphere-videos
-        mc anonymous set download local/clipsphere-thumbnails
-        echo "MinIO buckets and CORS configured."
+        mc anonymous set none local/clipsphere-videos
+        mc anonymous set none local/clipsphere-thumbnails
+        echo "MinIO buckets and CORS configured (private objects; use presigned URLs)."
 
 volumes:
   mongo_data:

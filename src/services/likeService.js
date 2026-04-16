@@ -2,7 +2,7 @@ import { Like } from '../db_core/models/Like.js';
 import { Video } from '../db_core/models/Video.js';
 import { User } from '../db_core/models/User.js';
 import { AppError } from '../utils/appError.js';
-import { VideoService } from './videoService.js';
+import { VideoService, attachMediaUrls } from './videoService.js';
 import { sendEngagementNotification } from '../utils/engagementNotificationUtil.js';
 
 export class LikeService {
@@ -33,7 +33,8 @@ export class LikeService {
         video.user,
         'like',
         liker?.username || 'Someone',
-        video.title
+        video.title,
+        videoId.toString()
       );
     }
 
@@ -93,7 +94,8 @@ export class LikeService {
     const likes = await Like.find({ user: userId })
       .populate({
         path: 'video',
-        select: 'title description videoUrl thumbnailUrl user views likesCount createdAt',
+        select:
+          'title description videoKey thumbnailKey videoUrl thumbnailUrl user views likesCount createdAt status',
         populate: { path: 'user', select: 'username avatarKey' },
       })
       .sort({ createdAt: -1 })
@@ -103,7 +105,7 @@ export class LikeService {
     const total = await Like.countDocuments({ user: userId });
 
     return {
-      videos: likes.map(like => like.video),
+      videos: likes.map((like) => (like.video ? attachMediaUrls(like.video) : null)).filter(Boolean),
       pagination: {
         total,
         page,
