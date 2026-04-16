@@ -102,6 +102,32 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    notificationPreferences: {
+      type: {
+        emailOnNewEngagement: {
+          type: Boolean,
+          default: true,
+        },
+        emailOnWelcome: {
+          type: Boolean,
+          default: true,
+        },
+        inAppOnNewEngagement: {
+          type: Boolean,
+          default: true,
+        },
+        inAppOnWelcome: {
+          type: Boolean,
+          default: true,
+        },
+      },
+      default: {
+        emailOnNewEngagement: true,
+        emailOnWelcome: true,
+        inAppOnNewEngagement: true,
+        inAppOnWelcome: true,
+      },
+    },
   },
   {
     timestamps: true,

@@ -1,20 +1,9 @@
-import multer from 'multer';
 import { AppError } from '../utils/appError.js';
 
 // Global error handling middleware
 export const globalErrorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
-
-  // Multer (multipart limits / field errors)
-  if (err instanceof multer.MulterError) {
-    const message =
-      err.code === 'LIMIT_FILE_SIZE'
-        ? 'File too large (exceeds server limit).'
-        : err.message;
-    err = new AppError(message, 400);
-    err.status = 'fail';
-  }
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {

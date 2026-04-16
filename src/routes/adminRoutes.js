@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(protect, restrictTo('admin'));
 
 router.get('/stats', AdminController.getStats);
+router.get('/statistics', AdminController.getStatistics);
 router.patch('/users/:id/status', AdminController.updateUserStatus);
 router.get('/moderation', AdminController.getModerationQueue);
 router.get('/health', AdminController.getHealth);

@@ -31,7 +31,7 @@ export default function ErrorBoundary({
         
         <button
           onClick={() => reset()}
-          className="w-full bg-black hover:bg-gray-900 border border-white text-white font-semibold py-3.5 px-8 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-purple-600 to-rose-600 hover:from-purple-500 hover:to-rose-500 text-white font-semibold py-3.5 px-8 rounded-xl shadow-[0_0_20px_rgba(225,29,72,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           Try Again
         </button>

@@ -7,9 +7,6 @@ export const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`❌ MongoDB connection error: ${error.message}`);
-    console.error(
-      '   → Start MongoDB: `docker compose up -d mongodb` (repo root), or run `mongod` locally, then restart the API.'
-    );
     process.exit(1);
   }
 };

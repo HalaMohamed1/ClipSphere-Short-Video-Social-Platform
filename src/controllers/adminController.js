@@ -80,4 +80,37 @@ export class AdminController {
       },
     });
   });
+
+  // Get combined statistics (for admin dashboard)
+  static getStatistics = catchAsync(async (req, res) => {
+    const stats = await AdminService.getStats();
+    
+    // Get system health metrics
+    const uptime = process.uptime();
+    const memoryUsage = process.memoryUsage();
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    
+    // Calculate memory percentage
+    const usedMemory = totalMemory - freeMemory;
+    const memoryPercentage = Math.round((usedMemory / totalMemory) * 100);
+
+    const readyState = mongoose.connection.readyState;
+    const dbLabels = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    const databaseStatus = dbLabels[readyState] ?? 'unknown';
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Complete statistics retrieved successfully',
+      data: {
+        totalUsers: stats.totalUsers,
+        totalVideos: stats.totalVideos,
+        systemHealth: {
+          uptime: Math.floor(uptime),
+          memoryUsage: memoryPercentage,
+          databaseStatus,
+        },
+      },
+    });
+  });
 }

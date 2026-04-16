@@ -1,6 +1,8 @@
 import { Review } from '../db_core/models/Review.js';
 import { Video } from '../db_core/models/Video.js';
+import { User } from '../db_core/models/User.js';
 import { AppError } from '../utils/appError.js';
+import { sendEngagementNotification } from '../utils/engagementNotificationUtil.js';
 
 export class ReviewService {
   static async createReview(reviewData) {
@@ -19,10 +21,23 @@ export class ReviewService {
     }
 
     const review = await Review.create(reviewData);
-    return review.populate([
+    const populatedReview = await review.populate([
       { path: 'user', select: 'username avatarKey' },
-      { path: 'video', select: 'title' },
+      { path: 'video', select: 'title user' },
     ]);
+
+    // Send engagement notification to video owner
+    if (video.user && video.user.toString() !== reviewData.user.toString()) {
+      const reviewer = await User.findById(reviewData.user).select('username');
+      await sendEngagementNotification(
+        video.user,
+        'review',
+        reviewer?.username || 'Someone',
+        video.title
+      );
+    }
+
+    return populatedReview;
   }
 
   static async getVideoReviews(videoId, options = {}) {
