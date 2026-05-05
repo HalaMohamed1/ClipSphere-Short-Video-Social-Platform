@@ -2,9 +2,17 @@ import Stripe from 'stripe';
 import { User } from '../db_core/models/User.js';
 import { Transaction } from '../db_core/models/Transaction.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe;
+
+const getStripe = () => {
+    if (!stripe) {
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    }
+    return stripe;
+};
 
 export const handleStripeWebhook = async (req, res) => {
+    const stripe = getStripe();
     const sig = req.headers['stripe-signature'];
     let event;
 

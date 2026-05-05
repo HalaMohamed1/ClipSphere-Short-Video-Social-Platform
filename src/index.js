@@ -2,6 +2,12 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { setServers, setDefaultResultOrder } from 'dns';
+
+// Force Google DNS to resolve MongoDB Atlas SRV records (fixes querySrv ECONNREFUSED)
+setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+setDefaultResultOrder('ipv4first');
+
 
 // Setup __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -9,19 +15,19 @@ const __dirname = path.dirname(__filename);
 
 // Load .env file from project root (one level up from src/)
 const envPath = path.resolve(__dirname, '..', '.env');
-console.log(`📁 Loading .env from: ${envPath}`);
+console.log(` Loading .env from: ${envPath}`);
 
 const result = dotenv.config({ path: envPath });
 if (result.error) {
-  console.error(`⚠️  Error loading .env file: ${result.error.message}`);
+  console.error(`  Error loading .env file: ${result.error.message}`);
 } else {
-  console.log(`✅ .env file loaded. Parsed ${Object.keys(result.parsed || {}).length} variables`);
+  console.log(` .env file loaded. Parsed ${Object.keys(result.parsed || {}).length} variables`);
 }
 
 // Manually set from process.env or use defaults
 if (!process.env.MONGODB_URI) {
   process.env.MONGODB_URI = 'mongodb://localhost:27017/clipsphere';
-  console.log('⚠️  MONGODB_URI not found, using default: mongodb://localhost:27017/clipsphere');
+  console.log('  MONGODB_URI not found, using default: mongodb://localhost:27017/clipsphere');
 }
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
@@ -33,9 +39,9 @@ if (!process.env.PORT) {
   process.env.PORT = 5000;
 }
 
-console.log(`✅ MONGODB_URI: ${process.env.MONGODB_URI}`);
-console.log(`✅ NODE_ENV: ${process.env.NODE_ENV}`);
-console.log(`✅ PORT: ${process.env.PORT}`);
+console.log(` MONGODB_URI: ${process.env.MONGODB_URI}`);
+console.log(` NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`PORT: ${process.env.PORT}`);
 
 // Now import other modules
 import express from 'express';
