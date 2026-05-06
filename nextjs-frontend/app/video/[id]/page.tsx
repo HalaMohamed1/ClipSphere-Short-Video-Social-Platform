@@ -7,6 +7,7 @@ import LikeButton from "../../../components/LikeButton";
 import ReviewSection from "../../../components/ReviewSection";
 import { apiCall } from "../../../lib/api";
 import { useAuth } from "../../../hooks/useAuth";
+import { SingleVideoSkeleton } from "../../../components/SkeletonLoader";
 
 interface VideoUser {
   _id: string;
@@ -185,7 +186,7 @@ export default function VideoDetailPage() {
   if (isLoading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-white/5 rounded-2xl aspect-video animate-pulse" />
+        <SingleVideoSkeleton />
       </div>
     );
   }

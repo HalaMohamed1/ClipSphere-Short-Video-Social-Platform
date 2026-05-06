@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { apiCall, API_BASE } from "../lib/api";
+import { initializeSocket, joinUserRoom, disconnectSocket } from "../lib/socket";
 
 export interface User {
   _id: string;
@@ -23,6 +24,12 @@ export function useAuth() {
       const data = await apiCall<{ user: User }>("/users/me");
       setUser(data.user);
       setError(null);
+      
+      // Initialize socket and join user room when authenticated
+      if (data.user) {
+        initializeSocket();
+        joinUserRoom(data.user._id);
+      }
     } catch {
       setUser(null);
       setError(null);
@@ -45,6 +52,7 @@ export function useAuth() {
       /* ignore */
     }
     setUser(null);
+    disconnectSocket();
     window.location.href = "/login";
   };
 

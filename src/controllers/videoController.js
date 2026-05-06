@@ -5,6 +5,7 @@ import { Video } from '../db_core/models/Video.js';
 import { VideoService, canAccessVideoMedia } from '../services/videoService.js';
 import { getObjectFromBucket, getVideoBucket, getThumbnailBucket } from '../services/storageService.js';
 import { createVideoSchema, updateVideoSchema } from '../validators/videoValidator.js';
+import { videoFeedQuerySchema, paginationSchema } from '../validators/commonValidator.js';
 
 export class VideoController {
   /** Multipart upload: video file + title/description (MinIO + ffprobe). */
@@ -48,19 +49,9 @@ export class VideoController {
 
   // Get all public videos (feed)
   static getPublicVideos = catchAsync(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const category = req.query.category;
-    const search = req.query.search;
-    const feed = req.query.feed;
+    const validatedQuery = videoFeedQuerySchema.parse(req.query);
 
-    const result = await VideoService.getPublicVideos({
-      page,
-      limit,
-      category,
-      search,
-      feed,
-    });
+    const result = await VideoService.getPublicVideos(validatedQuery);
 
     res.status(200).json({
       status: 'success',
@@ -71,14 +62,12 @@ export class VideoController {
 
   /** Videos from users the current user follows (Phase 2). */
   static getFollowingFeed = catchAsync(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const search = req.query.search;
+    const validatedQuery = paginationSchema.parse(req.query);
+    const search = req.query.search ? { search: req.query.search } : {};
 
     const result = await VideoService.getFollowingFeed(req.user._id, {
-      page,
-      limit,
-      search,
+      ...validatedQuery,
+      ...search,
     });
 
     res.status(200).json({

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { apiCall } from "../lib/api";
+import { onNewLike, onUnlike } from "../lib/socket";
 
 interface LikeButtonProps {
   videoId: string;
@@ -26,6 +27,28 @@ export default function LikeButton({
     setIsLiked(initialLiked);
     setLikeCount(initialCount);
   }, [initialLiked, initialCount]);
+
+  // Listen for real-time like events from other users
+  useEffect(() => {
+    const unsubscribeLike = onNewLike((data) => {
+      // If this is a like on the current video by someone else
+      if (data.videoId === videoId) {
+        console.log(`[v0] Real-time like received: ${data.liker} liked "${data.videoTitle}"`);
+      }
+    });
+
+    const unsubscribeUnlike = onUnlike((data) => {
+      // If this is an unlike on the current video by someone else
+      if (data.videoId === videoId) {
+        console.log(`[v0] Real-time unlike received: ${data.liker} unliked "${data.videoTitle}"`);
+      }
+    });
+
+    return () => {
+      unsubscribeLike();
+      unsubscribeUnlike();
+    };
+  }, [videoId]);
 
   const handleLikeClick = async () => {
     if (!user) {
