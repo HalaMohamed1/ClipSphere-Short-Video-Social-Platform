@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
+import { useEngagementHub } from "../hooks/useEngagementHub";
+import { ActivityIcon } from "./NotificationBadge";
 
 const SEARCH_DEBOUNCE_MS = 280;
 
@@ -15,6 +17,16 @@ export default function Navbar() {
   const qOnHome = pathname === "/" ? (searchParams.get("q") ?? "").trim() : "";
   const [searchInput, setSearchInput] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Get engagement notifications
+  const { hasUnread, unreadCount, clearNotifications } = useEngagementHub(!!user);
+
+  const handleActivityClick = () => {
+    // Navigate to notifications/activity page
+    router.push('/activity');
+    // Clear notifications when user visits
+    clearNotifications();
+  };
 
   useEffect(() => {
     if (pathname === "/") {
@@ -131,6 +143,14 @@ export default function Navbar() {
                 >
                   Upload
                 </Link>
+                
+                {/* Activity/Notification Icon with Badge */}
+                <ActivityIcon 
+                  unreadCount={unreadCount} 
+                  hasUnread={hasUnread}
+                  onClick={handleActivityClick}
+                />
+                
                 {user.role === "admin" && (
                   <Link
                     href="/admin"

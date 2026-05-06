@@ -45,15 +45,20 @@ console.log(`PORT: ${process.env.PORT}`);
 
 // Now import other modules
 import express from 'express';
+import helmet from 'helmet';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 import { connectDB } from './utils/database.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { socketAuthMiddleware, attachSocketInstance } from './middleware/socketAuth.js';
+import { initializeSocketEvents } from './db_core/socketEvents.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -64,9 +69,45 @@ import webhookRoutes from './routes/webhookRoutes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
+// ============= SOCKET.IO SETUP =============
+
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: (process.env.CLIENT_ORIGIN || 'http://localhost:3000').split(',').map((o) => o.trim()),
+    credentials: true,
+    methods: ['GET', 'POST'],
+  },
+  transports: ['websocket', 'polling'],
+});
+
+// Apply Socket.io authentication middleware
+io.use(socketAuthMiddleware);
+io.use(attachSocketInstance(io));
+
+// Initialize Socket.io event handlers
+initializeSocketEvents(io);
+
 // ============= MIDDLEWARE =============
+
+// Security headers with Helmet.js
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+    },
+  },
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true,
+  },
+}));
 
 // Request logging
 app.use(morgan('combined'));
@@ -80,6 +121,8 @@ app.use(
   cors({
     origin: clientOrigins.length ? clientOrigins : true,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(cookieParser());
@@ -168,8 +211,8 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDB();
 
-    // Start listening
-    app.listen(PORT, () => {
+    // Start listening on HTTP server (which includes Socket.io)
+    server.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║   ClipSphere Backend Server Started    ║
@@ -177,6 +220,7 @@ const startServer = async () => {
 ║  Port:     ${PORT}
 ║  ENV:      ${process.env.NODE_ENV}
 ║  API Docs: http://localhost:${PORT}/api-docs
+║  Socket.io: ws://localhost:${PORT}
 ╚════════════════════════════════════════╝
       `);
     });
@@ -195,3 +239,4 @@ process.on('unhandledRejection', (err) => {
 startServer();
 
 export default app;
+export { server, io };
