@@ -4,8 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
-import { useEngagementHub } from "../hooks/useEngagementHub";
-import { ActivityIcon } from "./NotificationBadge";
 
 const SEARCH_DEBOUNCE_MS = 280;
 
@@ -17,16 +15,6 @@ export default function Navbar() {
   const qOnHome = pathname === "/" ? (searchParams.get("q") ?? "").trim() : "";
   const [searchInput, setSearchInput] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
-  // Get engagement notifications
-  const { hasUnread, unreadCount, clearNotifications } = useEngagementHub(!!user);
-
-  const handleActivityClick = () => {
-    // Navigate to notifications/activity page
-    router.push('/activity');
-    // Clear notifications when user visits
-    clearNotifications();
-  };
 
   useEffect(() => {
     if (pathname === "/") {
@@ -143,14 +131,6 @@ export default function Navbar() {
                 >
                   Upload
                 </Link>
-                
-                {/* Activity/Notification Icon with Badge */}
-                <ActivityIcon 
-                  unreadCount={unreadCount} 
-                  hasUnread={hasUnread}
-                  onClick={handleActivityClick}
-                />
-                
                 {user.role === "admin" && (
                   <Link
                     href="/admin"
@@ -167,34 +147,15 @@ export default function Navbar() {
                       alt={user.username}
                     />
                   </div>
-                  <div className="hidden sm:flex flex-col gap-2 absolute top-full right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 whitespace-nowrap">
-                    <Link
-                      href={`/profile/${user.username}`}
-                      className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2 border-b border-zinc-800"
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      href="/settings"
-                      className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2 border-b border-zinc-800"
-                    >
-                      Settings
-                    </Link>
-                    <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors px-4 py-2">
-                      Log out
-                    </button>
-                  </div>
-                  <div className="sm:hidden flex items-center gap-2">
-                    <Link
-                      href="/settings"
-                      className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                    >
-                      Settings
-                    </Link>
-                    <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors">
-                      Log out
-                    </button>
-                  </div>
+                  <Link
+                    href="/settings"
+                    className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                  >
+                    Settings
+                  </Link>
+                  <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors">
+                    Log out
+                  </button>
                 </div>
               </div>
             ) : (

@@ -49,21 +49,9 @@ export class VideoController {
 
   // Get all public videos (feed)
   static getPublicVideos = catchAsync(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const category = req.query.category;
-    const search = req.query.search;
-    const feed = req.query.feed;
-    const userId = req.query.userId;
+    const validatedQuery = videoFeedQuerySchema.parse(req.query);
 
-    const result = await VideoService.getPublicVideos({
-      page,
-      limit,
-      category,
-      search,
-      feed,
-      userId,
-    });
+    const result = await VideoService.getPublicVideos(validatedQuery);
 
     res.status(200).json({
       status: 'success',
