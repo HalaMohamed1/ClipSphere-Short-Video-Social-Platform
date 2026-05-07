@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../hooks/useAuth";
+import NotificationIcon from "./NotificationIcon";
+import ProfileCard from "./ProfileCard";
 
 const SEARCH_DEBOUNCE_MS = 280;
 
@@ -14,6 +16,8 @@ export default function Navbar() {
   const searchParams = useSearchParams();
   const qOnHome = pathname === "/" ? (searchParams.get("q") ?? "").trim() : "";
   const [searchInput, setSearchInput] = useState("");
+  const [showProfileCard, setShowProfileCard] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -28,6 +32,22 @@ export default function Navbar() {
     },
     []
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
+        setShowProfileCard(false);
+      }
+    };
+
+    if (showProfileCard) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showProfileCard]);
 
   const pushSearchUrl = (raw: string) => {
     const q = raw.trim();
@@ -125,7 +145,8 @@ export default function Navbar() {
               <div className="h-8 w-8 rounded-full border-2 border-t-zinc-400 border-zinc-800 animate-spin" />
             ) : user ? (
               <div className="flex items-center gap-4">
-                  <Link
+                <NotificationIcon />
+                <Link
                   href="/upload"
                   className="hidden sm:block text-sm font-medium text-zinc-200 hover:text-white bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-4 py-2 rounded-md"
                 >
@@ -145,21 +166,34 @@ export default function Navbar() {
                     Admin
                   </Link>
                 )}
-                <div className="relative group flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full p-[1px] bg-zinc-700 cursor-pointer">
+                <div className="relative group flex items-center gap-3" ref={profileRef}>
+                  <button
+                    onClick={() => setShowProfileCard(!showProfileCard)}
+                    className="w-9 h-9 rounded-full p-[1px] bg-zinc-700 hover:bg-zinc-600 transition-colors"
+                  >
                     <img
                       className="w-full h-full rounded-full object-cover border-2 border-black"
                       src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=111111&color=ffffff`}
                       alt={user.username}
                     />
-                  </div>
+                  </button>
+
+                  {showProfileCard && (
+                    <div className="absolute right-0 top-12 z-50">
+                      <ProfileCard userId={user._id} username={user.username} />
+                    </div>
+                  )}
+
                   <Link
                     href="/settings"
                     className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
                   >
                     Settings
                   </Link>
-                  <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors">
+                  <button
+                    onClick={logout}
+                    className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
                     Log out
                   </button>
                 </div>

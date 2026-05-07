@@ -33,7 +33,13 @@ export const initializeSocket = (httpServer) => {
         .split(',')
         .map((o) => o.trim()),
       credentials: true,
+      methods: ['GET', 'POST'],
+      allowEIO3: true,
     },
+    path: '/socket.io/',
+    transports: ['websocket', 'polling'],
+    pingInterval: 25000,
+    pingTimeout: 5000,
   });
 
   // Add authentication middleware
@@ -42,6 +48,12 @@ export const initializeSocket = (httpServer) => {
   // Connection event
   io.on('connection', (socket) => {
     console.log(`[Socket.IO] New client connected: ${socket.id}, userId: ${socket.userId}`);
+    
+    socket.emit('connect_success', { 
+      message: 'Connected to Socket.IO server',
+      socketId: socket.id,
+      userId: socket.userId 
+    });
 
     // User joins their personal room
     socket.on('user:join', (userId) => {
