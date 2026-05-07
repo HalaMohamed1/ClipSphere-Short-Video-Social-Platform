@@ -46,6 +46,7 @@ console.log(`PORT: ${process.env.PORT}`);
 // Now import other modules
 import express from 'express';
 import helmet from 'helmet';
+import http from 'http';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 import cors from 'cors';

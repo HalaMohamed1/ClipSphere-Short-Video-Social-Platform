@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { apiCall, API_BASE } from "../lib/api";
+import { initializeSocket, joinUserRoom, disconnectSocket } from "../lib/socket";
 
 export interface User {
   _id: string;
