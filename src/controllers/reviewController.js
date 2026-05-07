@@ -2,6 +2,7 @@ import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
 import { ReviewService } from '../services/reviewService.js';
 import { createReviewSchema, updateReviewSchema } from '../validators/reviewValidator.js';
+import { paginationSchema } from '../validators/commonValidator.js';
 
 export class ReviewController {
   static createReview = catchAsync(async (req, res) => {
@@ -23,13 +24,9 @@ export class ReviewController {
   });
 
   static getVideoReviews = catchAsync(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const validatedQuery = paginationSchema.parse(req.query);
 
-    const result = await ReviewService.getVideoReviews(req.params.videoId, {
-      page,
-      limit,
-    });
+    const result = await ReviewService.getVideoReviews(req.params.videoId, validatedQuery);
 
     res.status(200).json({
       status: 'success',

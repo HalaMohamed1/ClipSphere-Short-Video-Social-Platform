@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiCall } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { createVideoSchema, formatValidationErrors, type CreateVideoData } from "@/lib/validators";
 
 export default function UploadPage() {
   const { user, loading } = useAuth();
@@ -12,6 +13,7 @@ export default function UploadPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
 
@@ -39,12 +41,24 @@ export default function UploadPage() {
       return;
     }
     setError("");
+    setErrors({});
     setUploading(true);
+
     try {
+      // Validate with Zod
+      const validationData = {
+        title: title || file.name,
+        description: description || undefined,
+      };
+
+      const validatedData = createVideoSchema.parse(validationData);
+
       const fd = new FormData();
       fd.append("video", file);
-      fd.append("title", title || file.name);
-      fd.append("description", description);
+      fd.append("title", validatedData.title);
+      if (validatedData.description) {
+        fd.append("description", validatedData.description);
+      }
 
       const result = await apiCall<{ video: { _id: string } }>("/videos/upload", {
         method: "POST",
@@ -53,7 +67,25 @@ export default function UploadPage() {
 
       router.push(`/video/${result.video._id}`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      if (err instanceof Error) {
+        // Check if it's a Zod validation error
+        if (err.message.includes('[') && err.message.includes(']')) {
+          try {
+            const zodError = JSON.parse(err.message);
+            if (zodError.errors) {
+              setErrors(formatValidationErrors(zodError));
+            } else {
+              setError(err.message);
+            }
+          } catch {
+            setError(err.message);
+          }
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Upload failed");
+      }
     } finally {
       setUploading(false);
     }
@@ -74,10 +106,12 @@ export default function UploadPage() {
           <input
             type="file"
             accept="video/*"
-            required
             onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full text-sm text-zinc-400 file:mr-4 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-800 file:text-zinc-200 file:px-4 file:py-2"
+            className={`w-full text-sm text-zinc-400 file:mr-4 file:rounded-md file:border file:border-zinc-700 file:bg-zinc-800 file:text-zinc-200 file:px-4 file:py-2 ${
+              errors.file ? 'border-red-500' : ''
+            }`}
           />
+          {errors.file && <p className="text-red-400 text-xs mt-1">{errors.file}</p>}
         </div>
         <div>
           <label className="block text-sm text-gray-300 mb-1">Title</label>
@@ -85,8 +119,11 @@ export default function UploadPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Defaults to filename"
-            className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none"
+            className={`w-full rounded-md bg-zinc-900 border px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none ${
+              errors.title ? 'border-red-500' : 'border-zinc-800'
+            }`}
           />
+          {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title}</p>}
         </div>
         <div>
           <label className="block text-sm text-gray-300 mb-1">Description</label>
@@ -94,8 +131,11 @@ export default function UploadPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none resize-none"
+            className={`w-full rounded-md bg-zinc-900 border px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none resize-none ${
+              errors.description ? 'border-red-500' : 'border-zinc-800'
+            }`}
           />
+          {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description}</p>}
         </div>
         <button
           type="submit"
