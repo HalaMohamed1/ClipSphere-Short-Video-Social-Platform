@@ -14,8 +14,26 @@ import { probeVideoDurationSeconds } from '../utils/videoProbe.js';
 import { extractVideoThumbnailJpeg, safeUnlink } from '../utils/videoThumbnail.js';
 import { cleanupTemp } from '../middleware/uploadVideo.js';
 
+/** AWS SDK may wrap Node system errors behind `cause`. */
+function isConnectionRefusedError(e) {
+  let x = e;
+  for (let i = 0; i < 6 && x; i++) {
+    if (x.code === 'ECONNREFUSED') return true;
+    x = x.cause;
+  }
+  const m = String(e?.message ?? '');
+  return m.includes('ECONNREFUSED');
+}
+
+function storageUnavailableAppError(endpoint) {
+  return new AppError(
+    `Cannot reach object storage (MinIO) at ${endpoint}. Start MinIO from the repo root: docker compose up -d minio minio-init`,
+    503
+  );
+}
+
 function getVideosMediaBasePath() {
-  const base = (process.env.SERVER_URL || 'http://localhost:5000').replace(/\/$/, '');
+  const base = (process.env.SERVER_URL || 'http://localhost:5050').replace(/\/$/, '');
   return `${base}/api/v1/videos`;
 }
 
@@ -68,7 +86,14 @@ export class VideoService {
       durationSec = await probeVideoDurationSeconds(file.path);
     } catch (e) {
       cleanupTemp(file.path);
-      throw new AppError('Could not read video file (ffprobe failed). Is ffmpeg installed?', 400);
+      const detail =
+        process.env.NODE_ENV === 'development'
+          ? ` (${e instanceof Error ? e.message : String(e)})`
+          : '';
+      throw new AppError(
+        `Could not read video file (ffprobe failed). Install FFmpeg so ffprobe is on PATH — e.g. macOS: brew install ffmpeg.${detail}`,
+        400
+      );
     }
 
     if (durationSec > 300) {
@@ -95,7 +120,15 @@ export class VideoService {
     } catch (e) {
       console.error('MinIO upload failed:', e);
       cleanupTemp(file.path);
-      throw new AppError('Object storage upload failed', 500);
+      const endpoint = process.env.MINIO_ENDPOINT || 'http://127.0.0.1:9000';
+      if (isConnectionRefusedError(e)) {
+        throw storageUnavailableAppError(endpoint);
+      }
+      const detail =
+        process.env.NODE_ENV === 'development'
+          ? ` (${e instanceof Error ? e.message : String(e)})`
+          : '';
+      throw new AppError(`Object storage upload failed${detail}`, 500);
     }
 
     let thumbnailKey = null;
@@ -147,10 +180,6 @@ export class VideoService {
 
     if (filters.category) {
       query.category = filters.category;
-    }
-
-    if (filters.userId) {
-      query.user = filters.userId;
     }
 
     const search =

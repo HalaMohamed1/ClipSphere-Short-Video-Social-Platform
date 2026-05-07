@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const transactionSchema = new mongoose.Schema({
+    /** Amount in smallest currency unit (cents for USD), matches Stripe amount_total. */
     amount: {
         type: Number,
         required: true,

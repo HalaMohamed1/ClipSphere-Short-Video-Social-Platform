@@ -7,6 +7,7 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
+    "preview": "next build && next start -p 3000",
     "lint": "next lint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,8 +19,8 @@
     "next": "^16.2.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "socket.io-client": "^4.7.2",
-    "zod": "^3.22.4"
+    "socket.io-client": "^4.8.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
