@@ -3,19 +3,22 @@ import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
+  const pathname = request.nextUrl.pathname;
 
-  const protectedRoutes = ['/profile', '/settings', '/upload', '/admin'];
-  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+  const protectedRoutes = ['/profile', '/settings', '/upload', '/admin', '/activity'];
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register');
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register');
 
-  if (isProtectedRoute) {
-    if (!token) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  // If trying to access protected routes, require authentication
+  if (isProtectedRoute && !token) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
+  // Validate token expiration for protected routes only
+  if (isProtectedRoute && token) {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) throw new Error("Invalid token format");
@@ -34,8 +37,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // Allow navigation to auth routes even if token exists
+  // (user can visit login/register, but the page handles redirects if already logged in)
+  if (isAuthRoute) {
+    return NextResponse.next();
   }
 
   return NextResponse.next();
