@@ -1,17 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { API_BASE } from "@/lib/api";
 import { registerSchema, formatValidationErrors, type RegisterData } from "@/lib/validators";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/");
+    }
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +44,13 @@ export default function RegisterPage() {
       if (!res.ok) {
         throw new Error(data.message || "Registration failed");
       }
+      
+      // Store token in localStorage for Socket.io authentication
+      if (data.data?.token) {
+        localStorage.setItem('jwtToken', data.data.token);
+        console.log('✅ Token stored in localStorage for Socket.io');
+      }
+      
       window.location.href = "/";
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -58,6 +76,12 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-gray-400">Loading…</div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto px-4 py-16">
@@ -104,9 +128,9 @@ export default function RegisterPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={`w-full rounded-md bg-zinc-900 border px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none ${
-              errors.password ? 'border-red-500' : 'border-zinc-800'
-            }`}
+            placeholder="Minimum 8 characters"
+            autoComplete="new-password"
+            className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-4 py-2 text-white placeholder-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none"
           />
           {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
         </div>

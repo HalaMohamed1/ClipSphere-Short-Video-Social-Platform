@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import VideoPlayer from "../../../components/VideoPlayer";
 import LikeButton from "../../../components/LikeButton";
+import FollowButton from "../../../components/FollowButton";
 import ReviewSection from "../../../components/ReviewSection";
 import { apiCall } from "../../../lib/api";
 import { useAuth } from "../../../hooks/useAuth";
@@ -261,13 +263,17 @@ export default function VideoDetailPage() {
 
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-zinc-100 font-medium text-lg">
-              {video.user.username.charAt(0).toUpperCase()}
-            </div>
+            <Link href={`/profile/${video.user.username}`}>
+              <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-zinc-100 font-medium text-lg hover:border-zinc-500 transition-colors cursor-pointer">
+                {video.user.username.charAt(0).toUpperCase()}
+              </div>
+            </Link>
             <div>
-              <p className="font-semibold text-white text-lg">
-                {video.user.username}
-              </p>
+              <Link href={`/profile/${video.user.username}`}>
+                <p className="font-semibold text-white text-lg hover:text-zinc-300 transition-colors cursor-pointer">
+                  {video.user.username}
+                </p>
+              </Link>
               {video.user.bio && (
                 <p className="text-sm text-gray-400">{video.user.bio}</p>
               )}
@@ -275,6 +281,7 @@ export default function VideoDetailPage() {
           </div>
 
           <div className="flex gap-3 flex-wrap">
+            <FollowButton userId={video.user._id} />
             <LikeButton
               videoId={videoId}
               initialLiked={isLiked}

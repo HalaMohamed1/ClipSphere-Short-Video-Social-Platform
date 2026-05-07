@@ -45,6 +45,7 @@ console.log(`PORT: ${process.env.PORT}`);
 
 // Now import other modules
 import express from 'express';
+import helmet from 'helmet';
 import http from 'http';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
@@ -52,10 +53,13 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 
 import { connectDB } from './utils/database.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import { initializeSocket } from './io/socketManager.js';
+import { socketAuthMiddleware, attachSocketInstance } from './middleware/socketAuth.js';
+import { initializeSocketEvents } from './db_core/socketEvents.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -66,25 +70,105 @@ import webhookRoutes from './routes/webhookRoutes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
 const app = express();
-const httpServer = http.createServer(app);
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
+// ============= SOCKET.IO SETUP =============
+
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: (process.env.CLIENT_ORIGIN || 'http://localhost:3000').split(',').map((o) => o.trim()),
+    credentials: true,
+    methods: ['GET', 'POST'],
+  },
+  transports: ['websocket', 'polling'],
+});
+
+// Apply Socket.io authentication middleware
+io.use(socketAuthMiddleware);
+io.use(attachSocketInstance(io));
+
+// Initialize Socket.io event handlers
+initializeSocketEvents(io);
+
 // ============= MIDDLEWARE =============
+
+// ============= SECURITY MIDDLEWARE =============
+
+// Helmet.js - Security headers
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      mediaSrc: ["'self'", 'blob:'], // Allow video/audio from same origin and blob URLs
+      connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'], // Allow WebSocket connections in development
+      frameSrc: ["'self'"], // Prevent clickjacking
+    },
+  },
+  crossOriginResourcePolicy: {
+    policy: 'cross-origin', // Allow cross-origin video streaming
+  },
+  // HSTS - only in production to avoid issues in development
+  hsts: isProduction ? {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true,
+  } : false,
+  // X-Content-Type-Options - prevent MIME type sniffing
+  noSniff: true,
+  // X-Frame-Options - prevent clickjacking
+  frameguard: {
+    action: 'deny',
+  },
+  // X-XSS-Protection - enable XSS protection
+  xssFilter: true,
+  // Referrer-Policy
+  referrerPolicy: {
+    policy: 'no-referrer',
+  },
+}));
 
 // Request logging
 app.use(morgan('combined'));
 
+// ============= CORS MIDDLEWARE =============
+
+// Parse and normalize client origins
 const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
 
+// CORS configuration
 app.use(
   cors({
-    origin: clientOrigins.length ? clientOrigins : true,
+    origin: (origin, callback) => {
+      // Allow requests without origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Check if origin is in allowed list or if we're in development mode
+      if (clientOrigins.includes(origin) || !isProduction) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS policy: origin ${origin} is not allowed`));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 3600, // Cache preflight requests for 1 hour
+    optionsSuccessStatus: 200, // For legacy browsers
   })
 );
+
+// Cookie parser
 app.use(cookieParser());
 
 // Mount webhook routes BEFORE express.json() so Stripe can get the raw body
@@ -171,11 +255,8 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDB();
 
-    // Initialize Socket.IO
-    initializeSocket(httpServer);
-
-    // Start listening
-    httpServer.listen(PORT, () => {
+    // Start listening on HTTP server (which includes Socket.io)
+    server.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║   ClipSphere Backend Server Started    ║
@@ -183,7 +264,7 @@ const startServer = async () => {
 ║  Port:     ${PORT}
 ║  ENV:      ${process.env.NODE_ENV}
 ║  API Docs: http://localhost:${PORT}/api-docs
-║  WebSocket: ws://localhost:${PORT}
+║  Socket.io: ws://localhost:${PORT}
 ╚════════════════════════════════════════╝
       `);
     });
@@ -202,3 +283,4 @@ process.on('unhandledRejection', (err) => {
 startServer();
 
 export default app;
+export { server, io };
