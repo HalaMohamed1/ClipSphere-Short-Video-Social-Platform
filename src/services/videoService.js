@@ -173,6 +173,11 @@ export class VideoService {
   static async getPublicVideos(filters = {}) {
     const query = { status: 'public' };
 
+    if (filters.userId) {
+      // Use mongoose ObjectId for user filtering
+      query.user = filters.userId;
+    }
+
     if (filters.category) {
       query.category = filters.category;
     }

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import VideoPlayer from "../../../components/VideoPlayer";
 import LikeButton from "../../../components/LikeButton";
+import FollowButton from "../../../components/FollowButton";
 import ReviewSection from "../../../components/ReviewSection";
 import { apiCall } from "../../../lib/api";
 import { useAuth } from "../../../hooks/useAuth";
@@ -295,9 +296,14 @@ export default function VideoDetailPage() {
               {video.user.username.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold text-white text-lg">
-                {video.user.username}
-              </p>
+              <div className="flex items-center gap-3 mb-1">
+                <p className="font-semibold text-white text-lg">
+                  {video.user.username}
+                </p>
+                {!isVideoOwner(user, video) && (
+                  <FollowButton userId={video.user._id} />
+                )}
+              </div>
               {video.user.bio && (
                 <p className="text-sm text-gray-400">{video.user.bio}</p>
               )}

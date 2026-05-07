@@ -14,6 +14,7 @@ const blockSelfFollow = (req, res, next) => {
 const router = express.Router();
 
 router.get('/me', protect, AuthController.getMe);
+router.get('/username/:username', AuthController.getUserProfileByUsername);
 router.patch('/updateMe', protect, AuthController.updateMe);
 router.patch('/preferences', protect, AuthController.updatePreferences);
 
@@ -21,6 +22,7 @@ router.post('/:id/follow', protect, blockSelfFollow, SocialGraphController.follo
 router.delete('/:id/unfollow', protect, SocialGraphController.unfollowUser);
 router.get('/:id/followers', SocialGraphController.getFollowers);
 router.get('/:id/following', SocialGraphController.getFollowing);
+router.get('/:id/stats', SocialGraphController.getUserStats);
 
 router.get('/:id', AuthController.getUserProfile);
 

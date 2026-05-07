@@ -76,6 +76,15 @@ export class AuthController {
     });
   });
 
+  static getUserProfileByUsername = catchAsync(async (req, res) => {
+    const user = await AuthService.getUserProfileByUsername(req.params.username);
+
+    res.status(200).json({
+      status: 'success',
+      data: { user },
+    });
+  });
+
   static updatePreferences = catchAsync(async (req, res) => {
     const validatedData = updatePreferencesSchema.parse(req.body);
 
