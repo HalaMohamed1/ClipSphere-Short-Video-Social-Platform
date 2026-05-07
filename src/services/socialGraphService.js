@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { User } from '../db_core/models/User.js';
 import { Follower } from '../db_core/models/Follower.js';
+import { Video } from '../db_core/models/Video.js';
 import { AppError } from '../utils/appError.js';
 import { resolveNotificationChannels } from '../utils/notificationEligibility.js';
 import { emitNewFollower } from '../io/socketManager.js';
@@ -125,6 +126,29 @@ export class SocialGraphService {
         limit,
         pages: Math.ceil(total / limit) || 1,
       },
+    };
+  }
+
+  static async getUserStats(userId) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new AppError('Invalid user id', 400);
+    }
+
+    const exists = await User.exists({ _id: userId });
+    if (!exists) {
+      throw new AppError('User not found', 404);
+    }
+
+    const [videosCount, followersCount, followingCount] = await Promise.all([
+      Video.countDocuments({ user: userId }),
+      Follower.countDocuments({ following: userId }),
+      Follower.countDocuments({ follower: userId }),
+    ]);
+
+    return {
+      videosCount,
+      followersCount,
+      followingCount,
     };
   }
 }

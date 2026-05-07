@@ -179,23 +179,38 @@ export default function Navbar() {
                   </button>
 
                   {showProfileCard && (
-                    <div className="absolute right-0 top-12 z-50">
-                      <ProfileCard userId={user._id} username={user.username} />
+                    <div className="absolute right-0 top-12 z-50 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-lg">
+                      {/* Profile Stats */}
+                      <div className="p-4 border-b border-zinc-800">
+                        <ProfileCard userId={user._id} username={user.username} />
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        <Link
+                          href={`/profile/${user.username}`}
+                          className="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                        >
+                          View Profile
+                        </Link>
+                        <Link
+                          href="/settings"
+                          className="block px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+                        >
+                          Settings
+                        </Link>
+                        <button
+                          onClick={() => {
+                            logout();
+                            setShowProfileCard(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors border-t border-zinc-800"
+                        >
+                          Log out
+                        </button>
+                      </div>
                     </div>
                   )}
-
-                  <Link
-                    href="/settings"
-                    className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                  >
-                    Settings
-                  </Link>
-                  <button
-                    onClick={logout}
-                    className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors"
-                  >
-                    Log out
-                  </button>
                 </div>
               </div>
             ) : (

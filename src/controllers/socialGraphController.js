@@ -65,4 +65,13 @@ export class SocialGraphController {
       data: result,
     });
   });
+
+  static getUserStats = catchAsync(async (req, res) => {
+    const stats = await SocialGraphService.getUserStats(req.params.id);
+
+    res.status(200).json({
+      status: 'success',
+      data: { stats },
+    });
+  });
 }
