@@ -46,6 +46,7 @@ console.log(`PORT: ${process.env.PORT}`);
 
 // Now import other modules
 import express from 'express';
+import http from 'http';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 import cors from 'cors';
@@ -55,6 +56,7 @@ import swaggerUi from 'swagger-ui-express';
 
 import { connectDB } from './utils/database.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import { initializeSocket } from './io/socketManager.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -179,6 +181,9 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDB();
 
+    // Initialize Socket.IO
+    initializeSocket(httpServer);
+
     // Start listening
     const server = app.listen(PORT, () => {
       console.log(`
@@ -188,6 +193,7 @@ const startServer = async () => {
 ║  Port:     ${PORT}
 ║  ENV:      ${process.env.NODE_ENV}
 ║  API Docs: http://localhost:${PORT}/api-docs
+║  WebSocket: ws://localhost:${PORT}
 ╚════════════════════════════════════════╝
       `);
     });
