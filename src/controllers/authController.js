@@ -65,7 +65,7 @@ export class AuthController {
     // Validate input with Zod
     const validatedData = updateUserSchema.parse(req.body);
 
-    const user = await AuthService.updateProfile(req.user._id, validatedData);
+    const user = await AuthService.updateProfile(req.user.id, validatedData);
 
     res.status(200).json({
       status: 'success',
@@ -84,22 +84,12 @@ export class AuthController {
     });
   });
 
-  // Get user by username (public profile)
-  static getUserProfileByUsername = catchAsync(async (req, res) => {
-    const user = await AuthService.getUserProfileByUsername(req.params.username);
-
-    res.status(200).json({
-      status: 'success',
-      data: { user },
-    });
-  });
-
   // Update notification preferences
   static updatePreferences = catchAsync(async (req, res) => {
     // Validate input with Zod
     const validatedData = updatePreferencesSchema.parse(req.body);
 
-    const user = await AuthService.updatePreferences(req.user._id, validatedData);
+    const user = await AuthService.updatePreferences(req.user.id, validatedData);
 
     res.status(200).json({
       status: 'success',

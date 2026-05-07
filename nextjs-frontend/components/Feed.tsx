@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { apiCall } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
 import { FeedSkeletonGrid, LoadMoreSkeleton } from "./SkeletonLoader";
@@ -39,7 +39,6 @@ function formatDuration(sec: number) {
 
 export default function Feed() {
   const { user } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQ = (searchParams.get("q") ?? "").trim();
 
@@ -183,29 +182,11 @@ export default function Feed() {
         {videos.map((video) => {
           const creator = video.user?.username || video.user?.name || "Creator";
           const hasThumb = Boolean(video.thumbnailUrl?.trim());
-
-          const handleVideoClick = (e: React.MouseEvent) => {
-            e.preventDefault();
-            router.push(`/video/${video._id}`);
-          };
-
-          const handleProfileClick = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            router.push(`/profile/${creator}`);
-          };
-
           return (
-            <div
+            <Link
+              href={`/video/${video._id}`}
               key={video._id}
-              onClick={handleVideoClick}
-              className="group block cursor-pointer"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleVideoClick(e as any);
-                }
-              }}
+              className="group block"
             >
               <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 transition-colors group-hover:border-zinc-600">
                 {hasThumb ? (
@@ -244,18 +225,8 @@ export default function Feed() {
                 </div>
 
                 <div className="absolute bottom-0 left-0 w-full p-4 flex items-end gap-3 bg-zinc-950/95 border-t border-zinc-800">
-                  <div
-                    onClick={handleProfileClick}
-                    className="relative cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        handleProfileClick(e as any);
-                      }
-                    }}
-                  >
-                    <div className="w-11 h-11 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium text-zinc-200 border border-zinc-600 hover:border-zinc-500 transition-colors">
+                  <div className="relative">
+                    <div className="w-11 h-11 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium text-zinc-200 border border-zinc-600">
                       {creator.charAt(0).toUpperCase()}
                     </div>
                   </div>
@@ -265,19 +236,7 @@ export default function Feed() {
                       {video.title}
                     </h3>
                     <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                      <div
-                        onClick={handleProfileClick}
-                        className="truncate pr-2 hover:text-zinc-300 transition-colors cursor-pointer"
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            handleProfileClick(e as any);
-                          }
-                        }}
-                      >
-                        {creator}
-                      </div>
+                      <span className="truncate pr-2">{creator}</span>
                       <span className="flex items-center gap-1 shrink-0">
                         {video.views > 1000
                           ? `${(video.views / 1000).toFixed(1)}k`
@@ -288,7 +247,7 @@ export default function Feed() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
