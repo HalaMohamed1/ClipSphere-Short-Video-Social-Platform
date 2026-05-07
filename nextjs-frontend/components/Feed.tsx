@@ -188,7 +188,7 @@ export default function Feed() {
               key={video._id}
               className="group block"
             >
-              <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 transition-colors group-hover:border-zinc-600">
+              <div className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-lg shadow-black/40 transition-colors group-hover:border-white/20">
                 {hasThumb ? (
                   <img
                     src={video.thumbnailUrl}
@@ -218,26 +218,26 @@ export default function Feed() {
                   </div>
                 )}
 
-                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-zinc-950/20 pointer-events-none" />
 
-                <div className="absolute top-3 right-3 bg-zinc-950 text-zinc-300 text-[11px] font-medium px-2 py-1 rounded border border-zinc-700">
+                <div className="absolute top-3 right-3 backdrop-blur-md bg-zinc-950/45 text-zinc-100 text-[11px] font-medium px-2.5 py-1 rounded-lg border border-white/10 shadow-sm">
                   {formatDuration(video.duration || 0)}
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-4 flex items-end gap-3 bg-zinc-950/95 border-t border-zinc-800">
+                <div className="absolute bottom-0 left-0 w-full p-3 sm:p-4 flex items-end gap-3 backdrop-blur-lg bg-zinc-950/35 border-t border-white/10">
                   <div className="relative">
-                    <div className="w-11 h-11 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium text-zinc-200 border border-zinc-600">
+                    <div className="w-11 h-11 rounded-full bg-zinc-800/90 backdrop-blur-sm flex items-center justify-center text-sm font-medium text-zinc-100 border border-white/15 shadow-inner">
                       {creator.charAt(0).toUpperCase()}
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-zinc-100 font-medium text-sm leading-snug mb-1.5 line-clamp-2">
+                    <h3 className="text-zinc-50 font-medium text-sm leading-snug mb-1 line-clamp-2 drop-shadow-md">
                       {video.title}
                     </h3>
-                    <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                    <div className="flex items-center justify-between text-[11px] text-zinc-300/90">
                       <span className="truncate pr-2">{creator}</span>
-                      <span className="flex items-center gap-1 shrink-0">
+                      <span className="flex items-center gap-1 shrink-0 text-zinc-400">
                         {video.views > 1000
                           ? `${(video.views / 1000).toFixed(1)}k`
                           : video.views}{" "}

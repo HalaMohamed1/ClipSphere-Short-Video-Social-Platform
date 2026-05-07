@@ -2,7 +2,7 @@ const RAW = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) 
 const API_BASE = (
   RAW
     ? RAW.replace(/\/$/, "")
-    : "http://localhost:5000/api/v1"
+    : "http://localhost:5050/api/v1"
 ).replace(/\/api\/?v1$/i, "") + "/api/v1";
 
 export interface ApiResponse<T> {
@@ -27,6 +27,7 @@ export async function apiCall<T>(
   const response = await fetch(url, {
     ...options,
     credentials: "include",
+    cache: options.cache ?? "no-store",
     headers: isFormData
       ? { ...(options.headers as Record<string, string>) }
       : {
