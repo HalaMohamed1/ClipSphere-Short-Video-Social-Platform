@@ -167,15 +167,34 @@ export default function Navbar() {
                       alt={user.username}
                     />
                   </div>
-                  <Link
-                    href="/settings"
-                    className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                  >
-                    Settings
-                  </Link>
-                  <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors">
-                    Log out
-                  </button>
+                  <div className="hidden sm:flex flex-col gap-2 absolute top-full right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 whitespace-nowrap">
+                    <Link
+                      href={`/profile/${user.username}`}
+                      className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2 border-b border-zinc-800"
+                    >
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/settings"
+                      className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-4 py-2 border-b border-zinc-800"
+                    >
+                      Settings
+                    </Link>
+                    <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors px-4 py-2">
+                      Log out
+                    </button>
+                  </div>
+                  <div className="sm:hidden flex items-center gap-2">
+                    <Link
+                      href="/settings"
+                      className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                    >
+                      Settings
+                    </Link>
+                    <button onClick={logout} className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors">
+                      Log out
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

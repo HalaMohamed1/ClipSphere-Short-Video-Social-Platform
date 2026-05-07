@@ -24,30 +24,49 @@ export async function apiCall<T>(
   const isFormData =
     typeof FormData !== "undefined" && options.body instanceof FormData;
 
-  const response = await fetch(url, {
-    ...options,
-    credentials: "include",
-    headers: isFormData
-      ? { ...(options.headers as Record<string, string>) }
-      : {
-          "Content-Type": "application/json",
-          ...(options.headers as Record<string, string>),
-        },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: isFormData
+        ? { ...(options.headers as Record<string, string>) }
+        : {
+            "Content-Type": "application/json",
+            ...(options.headers as Record<string, string>),
+          },
+    });
+  } catch (fetchError) {
+    const errorMsg = fetchError instanceof Error ? fetchError.message : "Network request failed";
+    throw new Error(errorMsg);
+  }
 
   if (!response.ok) {
-    let message = `API Error: ${response.status}`;
+    let message = `HTTP ${response.status}`;
     try {
-      const err = await response.json();
-      message = err.message || message;
+      const errorData = await response.json();
+      if (errorData && typeof errorData === "object") {
+        const errorMsg = (errorData as any).message || (errorData as any).error;
+        if (errorMsg) {
+          message = `${message}: ${errorMsg}`;
+        }
+      }
     } catch {
-      /* ignore */
+      /* ignore parse error */
+    }
+    // Only log errors that aren't expected (401 is expected when logged out)
+    if (response.status !== 401) {
+      console.error(`API call failed to ${endpoint}: ${message}`);
     }
     throw new Error(message);
   }
 
-  const result: ApiResponse<T> = await response.json();
-  return result.data as T;
+  try {
+    const result: ApiResponse<T> = await response.json();
+    return result.data as T;
+  } catch (parseError) {
+    throw new Error("Failed to parse API response");
+  }
 }
 
 /** Same as apiCall; adds Bearer when token is provided (cookie auth is used regardless). */

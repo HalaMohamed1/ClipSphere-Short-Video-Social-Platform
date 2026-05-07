@@ -1,6 +1,9 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
 import { LikeService } from '../services/likeService.js';
+import { VideoService } from '../services/videoService.js';
+import { emitNewLikeEvent } from '../utils/engagementEmitter.js';
+import { io } from '../index.js';
 
 export class LikeController {
   // Like a video
@@ -9,6 +12,25 @@ export class LikeController {
     const { videoId } = req.params;
 
     const like = await LikeService.likeVideo(userId, videoId);
+
+    // Emit socket event to video owner
+    try {
+      const video = await VideoService.getVideoById(videoId);
+      if (video && video.user) {
+        const videoOwnerId = video.user._id;
+        emitNewLikeEvent(
+          io,
+          videoOwnerId,
+          userId,
+          req.user.username,
+          videoId,
+          video.title
+        );
+      }
+    } catch (error) {
+      console.error('Error emitting like event:', error.message);
+      // Don't fail the request if socket emission fails
+    }
 
     res.status(201).json({
       status: 'success',

@@ -1,5 +1,7 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { SocialGraphService } from '../services/socialGraphService.js';
+import { emitNewFollowerEvent } from '../utils/engagementEmitter.js';
+import { io } from '../index.js';
 
 export class SocialGraphController {
   static followUser = catchAsync(async (req, res) => {
@@ -9,6 +11,19 @@ export class SocialGraphController {
       req.user._id,
       targetId
     );
+
+    // Emit socket event to followed user
+    try {
+      emitNewFollowerEvent(
+        io,
+        targetId,
+        req.user._id,
+        req.user.username
+      );
+    } catch (error) {
+      console.error('Error emitting follow event:', error.message);
+      // Don't fail the request if socket emission fails
+    }
 
     res.status(201).json({
       status: 'success',

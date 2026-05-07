@@ -15,89 +15,21 @@ export const useEngagementHub = (shouldConnect = true) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Initialize socket connection
-  useEffect(() => {
-    if (!shouldConnect) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const token = getJWTToken();
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      const socket = initializeSocket(token);
-
-      // Listen for new engagement events
-      socket.on('new-like', (data) => {
-        console.log('📝 New like notification:', data);
-        addNotification({
-          type: 'like',
-          ...data,
-        });
-      });
-
-      socket.on('new-comment', (data) => {
-        console.log('💬 New comment notification:', data);
-        addNotification({
-          type: 'comment',
-          ...data,
-        });
-      });
-
-      socket.on('new-follower', (data) => {
-        console.log('👤 New follower notification:', data);
-        addNotification({
-          type: 'follow',
-          ...data,
-        });
-      });
-
-      socket.on('new-tip', (data) => {
-        console.log('💰 New tip notification:', data);
-        addNotification({
-          type: 'tip',
-          ...data,
-        });
-      });
-
-      socket.on('badge-cleared', () => {
-        console.log('🔔 Badge cleared');
-        clearNotifications();
-      });
-
-      setIsLoading(false);
-      setError(null);
-
-      return () => {
-        socket.off('new-like');
-        socket.off('new-comment');
-        socket.off('new-follower');
-        socket.off('new-tip');
-        socket.off('badge-cleared');
-      };
-    } catch (err) {
-      console.error('Error initializing socket:', err);
-      setError(err.message);
-      setIsLoading(false);
-    }
-  }, [shouldConnect]);
-
   /**
    * Add a new notification
    */
   const addNotification = useCallback((notification) => {
-    setEngagementNotifications((prev) => [
-      {
-        id: `${notification.type}-${Date.now()}`,
-        read: false,
-        ...notification,
-      },
-      ...prev,
-    ]);
+    const notifWithId = {
+      id: `${notification.type}-${Date.now()}`,
+      read: false,
+      ...notification,
+    };
+    console.log('📌 Adding notification to state:', notifWithId);
+    setEngagementNotifications((prev) => {
+      const updated = [notifWithId, ...prev];
+      console.log('📊 Total notifications in state:', updated.length);
+      return updated;
+    });
     setHasUnread(true);
     setUnreadCount((prev) => prev + 1);
   }, []);
@@ -118,6 +50,82 @@ export const useEngagementHub = (shouldConnect = true) => {
       });
     }
   }, []);
+
+  // Initialize socket connection
+  useEffect(() => {
+    if (!shouldConnect) {
+      console.log('⏭️  Skipping socket connection (shouldConnect=false)');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const token = getJWTToken();
+      if (!token) {
+        console.warn('⚠️  No JWT token found, cannot initialize socket');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('🚀 useEngagementHub: Initializing socket...');
+      const socket = initializeSocket(token);
+
+      // Listen for new engagement events
+      socket.on('new-like', (data) => {
+        console.log('📝 NEW LIKE RECEIVED:', data);
+        addNotification({
+          type: 'like',
+          ...data,
+        });
+      });
+
+      socket.on('new-comment', (data) => {
+        console.log('💬 NEW COMMENT RECEIVED:', data);
+        addNotification({
+          type: 'comment',
+          ...data,
+        });
+      });
+
+      socket.on('new-follower', (data) => {
+        console.log('👤 NEW FOLLOWER RECEIVED:', data);
+        addNotification({
+          type: 'follow',
+          ...data,
+        });
+      });
+
+      socket.on('new-tip', (data) => {
+        console.log('💰 NEW TIP RECEIVED:', data);
+        addNotification({
+          type: 'tip',
+          ...data,
+        });
+      });
+
+      socket.on('badge-cleared', () => {
+        console.log('🔔 Badge cleared event received');
+        clearNotifications();
+      });
+
+      console.log('✨ Socket event listeners attached');
+      setIsLoading(false);
+      setError(null);
+
+      return () => {
+        console.log('🧹 Cleaning up socket listeners');
+        socket.off('new-like');
+        socket.off('new-comment');
+        socket.off('new-follower');
+        socket.off('new-tip');
+        socket.off('badge-cleared');
+      };
+    } catch (err) {
+      console.error('❌ Error initializing socket:', err);
+      setError(err.message);
+      setIsLoading(false);
+    }
+  }, [shouldConnect, addNotification, clearNotifications]);
 
   /**
    * Mark notification as read

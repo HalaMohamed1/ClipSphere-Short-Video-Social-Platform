@@ -53,6 +53,7 @@ export class VideoController {
     const category = req.query.category;
     const search = req.query.search;
     const feed = req.query.feed;
+    const userId = req.query.userId;
 
     const result = await VideoService.getPublicVideos({
       page,
@@ -60,6 +61,7 @@ export class VideoController {
       category,
       search,
       feed,
+      userId,
     });
 
     res.status(200).json({

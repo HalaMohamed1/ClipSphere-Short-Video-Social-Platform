@@ -3,10 +3,22 @@
  */
 
 /**
- * Get JWT token from document cookies
+ * Get JWT token from localStorage or cookies
  * @returns {string | null} JWT token or null if not found
  */
 export const getJWTToken = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  // First try localStorage (stored for Socket.io)
+  const tokenFromStorage = localStorage.getItem('jwtToken');
+  if (tokenFromStorage) {
+    console.log('🔑 Token found in localStorage');
+    return tokenFromStorage;
+  }
+
+  // Fallback to cookies
   if (typeof document === 'undefined') {
     return null;
   }
@@ -14,10 +26,13 @@ export const getJWTToken = () => {
   const cookies = document.cookie.split(';');
   for (let cookie of cookies) {
     cookie = cookie.trim();
-    if (cookie.startsWith('jwt=')) {
-      return cookie.substring(4);
+    if (cookie.startsWith('token=')) {
+      console.log('🔑 Token found in cookies');
+      return cookie.substring(6);
     }
   }
+  
+  console.log('❌ No token found in localStorage or cookies');
   return null;
 };
 

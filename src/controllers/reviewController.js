@@ -1,7 +1,10 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
 import { ReviewService } from '../services/reviewService.js';
+import { VideoService } from '../services/videoService.js';
 import { createReviewSchema, updateReviewSchema } from '../validators/reviewValidator.js';
+import { emitNewCommentEvent } from '../utils/engagementEmitter.js';
+import { io } from '../index.js';
 
 export class ReviewController {
   static createReview = catchAsync(async (req, res) => {
@@ -14,6 +17,26 @@ export class ReviewController {
     };
 
     const review = await ReviewService.createReview(reviewData);
+
+    // Emit socket event to video owner
+    try {
+      const video = await VideoService.getVideoById(req.params.videoId);
+      if (video && video.user) {
+        const videoOwnerId = video.user._id;
+        emitNewCommentEvent(
+          io,
+          videoOwnerId,
+          req.user._id,
+          req.user.username,
+          req.params.videoId,
+          video.title,
+          validatedData.comment || ''
+        );
+      }
+    } catch (error) {
+      console.error('Error emitting comment event:', error.message);
+      // Don't fail the request if socket emission fails
+    }
 
     res.status(201).json({
       status: 'success',

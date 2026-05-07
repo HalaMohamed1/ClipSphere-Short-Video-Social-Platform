@@ -9,10 +9,12 @@ let socketInstance = null;
  */
 export const initializeSocket = (token) => {
   if (socketInstance) {
+    console.log('ℹ️  Reusing existing socket instance:', socketInstance.id);
     return socketInstance;
   }
 
   const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  console.log('🔌 Initializing socket connection to:', serverUrl);
 
   socketInstance = io(serverUrl, {
     auth: {
@@ -35,13 +37,14 @@ export const initializeSocket = (token) => {
   });
 
   socketInstance.on('connect_error', (error) => {
-    console.error('❌ Socket connection error:', error);
+    console.error('❌ Socket connection error:', error.message);
   });
 
   socketInstance.on('error', (error) => {
     console.error('❌ Socket error:', error);
   });
 
+  console.log('🔗 Socket instance created, waiting for connection...');
   return socketInstance;
 };
 

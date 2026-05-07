@@ -92,7 +92,11 @@ initializeSocketEvents(io);
 
 // ============= MIDDLEWARE =============
 
-// Security headers with Helmet.js
+// ============= SECURITY MIDDLEWARE =============
+
+// Helmet.js - Security headers
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -100,31 +104,70 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", 'data:', 'https:'],
+      mediaSrc: ["'self'", 'blob:'], // Allow video/audio from same origin and blob URLs
+      connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'], // Allow WebSocket connections in development
+      frameSrc: ["'self'"], // Prevent clickjacking
     },
   },
-  hsts: {
+  crossOriginResourcePolicy: {
+    policy: 'cross-origin', // Allow cross-origin video streaming
+  },
+  // HSTS - only in production to avoid issues in development
+  hsts: isProduction ? {
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
     preload: true,
+  } : false,
+  // X-Content-Type-Options - prevent MIME type sniffing
+  noSniff: true,
+  // X-Frame-Options - prevent clickjacking
+  frameguard: {
+    action: 'deny',
+  },
+  // X-XSS-Protection - enable XSS protection
+  xssFilter: true,
+  // Referrer-Policy
+  referrerPolicy: {
+    policy: 'no-referrer',
   },
 }));
 
 // Request logging
 app.use(morgan('combined'));
 
+// ============= CORS MIDDLEWARE =============
+
+// Parse and normalize client origins
 const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
 
+// CORS configuration
 app.use(
   cors({
-    origin: clientOrigins.length ? clientOrigins : true,
+    origin: (origin, callback) => {
+      // Allow requests without origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Check if origin is in allowed list or if we're in development mode
+      if (clientOrigins.includes(origin) || !isProduction) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS policy: origin ${origin} is not allowed`));
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 3600, // Cache preflight requests for 1 hour
+    optionsSuccessStatus: 200, // For legacy browsers
   })
 );
+
+// Cookie parser
 app.use(cookieParser());
 
 // Mount webhook routes BEFORE express.json() so Stripe can get the raw body
