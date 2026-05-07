@@ -169,12 +169,6 @@ export type PaginationQuery = z.infer<typeof paginationSchema>;
 // UTILITY FUNCTIONS
 // ============================================================================
 
-/**
- * Validates and parses data against a Zod schema
- * @param schema - Zod schema to validate against
- * @param data - Data to validate
- * @returns Parsed data or error messages
- */
 export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; errors: Record<string, string> } {
   try {
     const parsed = schema.parse(data);
@@ -192,11 +186,6 @@ export function validateData<T>(schema: z.ZodSchema<T>, data: unknown): { succes
   }
 }
 
-/**
- * Formats Zod validation errors for display
- * @param errors - Zod validation errors
- * @returns Formatted error object
- */
 export function formatValidationErrors(error: z.ZodError): Record<string, string> {
   const formatted: Record<string, string> = {};
   error.errors.forEach((err) => {

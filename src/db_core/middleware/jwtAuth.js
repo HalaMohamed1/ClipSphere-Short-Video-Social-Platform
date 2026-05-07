@@ -1,23 +1,5 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js'; 
-/**
- * @openapi
- * components:
- *   responses:
- *     UnauthorizedError:
- *       description: Access token is missing or invalid.
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 example: error
- *               message:
- *                 type: string
- *                 example: Invalid token.
- */
 
 // JWT Bearer Protection Middleware
 export const authenticateToken = async (req, res, next) => {

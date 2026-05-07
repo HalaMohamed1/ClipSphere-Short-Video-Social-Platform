@@ -8,7 +8,6 @@ interface VideoPlayerProps {
   onViewIncrement?: () => void;
 }
 
-/** Platform max clip is 5m; clips under 3s never reached old "3s watch" rule — qualify at min(3s, ~half clip). */
 function viewWatchThresholdSec(durationSec: number): number {
   if (!durationSec || !Number.isFinite(durationSec) || durationSec <= 0) {
     return 3;
@@ -114,7 +113,7 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
         className="w-full h-full cursor-pointer"
       />
 
-      {/* Play/Pause Overlay */}
+      {}
       {!isPlaying && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors" onClick={togglePlay}>
           <div className="w-16 h-16 rounded-full bg-zinc-100/90 border border-zinc-300 flex items-center justify-center hover:bg-white transition-colors">
@@ -125,9 +124,9 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
         </div>
       )}
 
-      {/* Controls Bar */}
+      {}
       <div className="absolute bottom-0 left-0 right-0 bg-zinc-950/95 border-t border-zinc-800 p-3 translate-y-full group-hover:translate-y-0 hover:translate-y-0 transition-transform duration-200">
-        {/* Progress Bar */}
+        {}
         <div className="mb-3">
           <input
             type="range"
@@ -144,7 +143,7 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
           />
         </div>
 
-        {/* Control Buttons */}
+        {}
         <div className="flex items-center justify-between gap-2 text-white text-sm">
           <div className="flex items-center gap-3">
             <button onClick={togglePlay} className="hover:opacity-80 transition-opacity" title={isPlaying ? "Pause" : "Play"}>
@@ -159,7 +158,7 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
               )}
             </button>
 
-            {/* Volume Control */}
+            {}
             <div className="flex items-center gap-1 group/volume">
               <button className="hover:opacity-80 transition-opacity" title="Volume">
                 {volume === 0 ? (
@@ -206,7 +205,7 @@ export default function VideoPlayer({ src, thumbnail, onViewIncrement }: VideoPl
         </div>
       </div>
 
-      {/* Hover to show controls */}
+      {}
       <style>{`
         div:has(> video):hover > div:last-child {
           transform: translateY(0);

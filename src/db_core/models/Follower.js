@@ -1,26 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     Follower:
- *       type: object
- *       required:
- *         - follower
- *         - following
- *       properties:
- *         follower:
- *           type: string
- *           description: The ID of the user who is following another user.
- *         following:
- *           type: string
- *           description: The ID of the user who is being followed.
- *         createdAt:
- *           type: string
- *           format: date-time
- */
-
 const followerSchema = new mongoose.Schema(
   {
     follower: {
@@ -41,11 +20,9 @@ const followerSchema = new mongoose.Schema(
   { timestamps: { createdAt: true, updatedAt: false } }
 );
 
-
 followerSchema.index({ follower: 1, following: 1 }, { unique: true });
 
 followerSchema.index({ following: 1, createdAt: -1 });
-
 
 followerSchema.pre('save', function (next) {
   if (this.follower.equals(this.following)) {

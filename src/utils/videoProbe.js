@@ -7,9 +7,6 @@ if (process.env.FFPROBE_PATH) {
   ffmpeg.setFfprobePath(process.env.FFPROBE_PATH);
 }
 
-/**
- * Returns duration in seconds (float) using ffprobe.
- */
 export function probeVideoDurationSeconds(filePath) {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(filePath, (err, metadata) => {

@@ -1,26 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     Like:
- *       type: object
- *       required:
- *         - user
- *         - video
- *       properties:
- *         user:
- *           type: string
- *           description: The ID of the user who liked the video.
- *         video:
- *           type: string
- *           description: The ID of the video being liked.
- *         createdAt:
- *           type: string
- *           format: date-time
- */
-
 const likeSchema = new mongoose.Schema(
   {
     user: {

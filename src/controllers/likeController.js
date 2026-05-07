@@ -7,18 +7,15 @@ import { User } from '../db_core/models/User.js';
 import { likesPaginationSchema } from '../validators/likeValidator.js';
 
 export class LikeController {
-  // Like a video
   static likeVideo = catchAsync(async (req, res) => {
     const userId = req.user._id;
     const { videoId } = req.params;
 
     const like = await LikeService.likeVideo(userId, videoId);
 
-    // Get video and liker details for socket event
     const video = await Video.findById(videoId).populate('user', '_id');
     const liker = await User.findById(userId).select('username');
 
-    // Emit real-time like event to video owner
     if (video && video.user) {
       emitNewLike(video.user._id, {
         likerId: userId,
@@ -35,18 +32,15 @@ export class LikeController {
     });
   });
 
-  // Unlike a video
   static unlikeVideo = catchAsync(async (req, res) => {
     const userId = req.user._id;
     const { videoId } = req.params;
 
     const result = await LikeService.unlikeVideo(userId, videoId);
 
-    // Get video and liker details for socket event
     const video = await Video.findById(videoId).populate('user', '_id');
     const liker = await User.findById(userId).select('username');
 
-    // Emit real-time unlike event to video owner
     if (video && video.user) {
       emitUnlike(video.user._id, {
         likerId: userId,
@@ -62,7 +56,6 @@ export class LikeController {
     });
   });
 
-  // Check if video is liked by user
   static isVideoLiked = catchAsync(async (req, res) => {
     const userId = req.user._id;
     const { videoId } = req.params;
@@ -75,7 +68,6 @@ export class LikeController {
     });
   });
 
-  // Get all likes for a video
   static getVideoLikes = catchAsync(async (req, res) => {
     const { videoId } = req.params;
     const validatedQuery = likesPaginationSchema.parse(req.query);
@@ -89,7 +81,6 @@ export class LikeController {
     });
   });
 
-  // Get all videos liked by user
   static getUserLikedVideos = catchAsync(async (req, res) => {
     const userId = req.user._id;
     const validatedQuery = likesPaginationSchema.parse(req.query);
@@ -103,7 +94,6 @@ export class LikeController {
     });
   });
 
-  // Increment view count for a video
   static incrementViewCount = catchAsync(async (req, res) => {
     const { videoId } = req.params;
 

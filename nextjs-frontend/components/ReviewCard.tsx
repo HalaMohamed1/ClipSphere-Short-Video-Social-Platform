@@ -34,7 +34,7 @@ export default function ReviewCard({
     user && String(user._id) === String(review.user._id)
   );
   const isAdmin = user?.role === "admin";
-  /** SWAPD352 / API: delete = author or admin; update review = author only */
+  
   const canEdit = isReviewAuthor;
   const canDelete = isReviewAuthor || isAdmin;
 

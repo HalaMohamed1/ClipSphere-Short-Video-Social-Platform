@@ -11,7 +11,7 @@ export interface User {
   avatarKey?: string;
   role?: string;
   bio?: string;
-  /** Available balance in cents (smallest currency unit). */
+  
   walletBalance?: number;
 }
 
@@ -51,7 +51,7 @@ export function useAuth() {
         credentials: "include",
       });
     } catch {
-      /* ignore */
+      
     }
     setUser(null);
     disconnectSocket();

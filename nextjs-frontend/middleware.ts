@@ -34,10 +34,9 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
+  // Allow access to auth pages even with a token - let components handle redirects
+  // This allows testing auth flows and creating multiple accounts if needed
+  
   return NextResponse.next();
 }
 

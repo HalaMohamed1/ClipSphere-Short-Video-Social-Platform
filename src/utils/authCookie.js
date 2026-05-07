@@ -1,6 +1,4 @@
-/**
- * HttpOnly JWT cookie options for browser clients (Phase 2 PDF).
- */
+
 export function getAuthCookieOptions() {
   const maxAgeMs = parseJwtExpireToMs(process.env.JWT_EXPIRE || '24h');
 

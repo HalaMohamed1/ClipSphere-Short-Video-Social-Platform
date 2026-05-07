@@ -4,7 +4,6 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerOptions } from './docs/swagger.js';
 import { authenticateToken } from './middleware/jwtAuth.js';
 
-
 export const setupCoreDocumentation = (app) => {
   const coreSpecs = swaggerJsdoc(swaggerOptions);
   

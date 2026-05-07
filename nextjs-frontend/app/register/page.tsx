@@ -29,12 +29,25 @@ export default function RegisterPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validatedData),
       });
-      const data = await res.json().catch(() => ({}));
+      
       if (!res.ok) {
-        throw new Error(data.message || "Registration failed");
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || `Registration failed: ${res.statusText}`);
       }
-      window.location.href = "/";
+      
+      const data = await res.json();
+      
+      if (data.data?.token) {
+        localStorage.setItem('jwtToken', data.data.token);
+        console.log('✅ Token stored in localStorage');
+      }
+      
+      // Add small delay to ensure cookie is fully written before navigation
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 200);
     } catch (err: unknown) {
+      console.error('Registration error:', err);
       if (err instanceof Error) {
         // Check if it's a Zod validation error
         if (err.message.includes('[') && err.message.includes(']')) {

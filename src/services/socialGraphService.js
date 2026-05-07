@@ -3,6 +3,7 @@ import { User } from '../db_core/models/User.js';
 import { Follower } from '../db_core/models/Follower.js';
 import { AppError } from '../utils/appError.js';
 import { resolveNotificationChannels } from '../utils/notificationEligibility.js';
+import { emitNewFollower } from '../io/socketManager.js';
 
 const PUBLIC_USER_FIELDS = 'username avatarKey bio role createdAt';
 
@@ -12,7 +13,11 @@ export class SocialGraphService {
       throw new AppError('You cannot follow yourself', 400);
     }
 
-    const target = await User.findById(targetUserId);
+    const [target, follower] = await Promise.all([
+      User.findById(targetUserId),
+      User.findById(followerId),
+    ]);
+
     if (!target) {
       throw new AppError('User not found', 404);
     }
@@ -24,6 +29,11 @@ export class SocialGraphService {
       });
 
       const notificationDecision = resolveNotificationChannels(target, 'followers');
+
+      emitNewFollower(targetUserId, {
+        followerId,
+        followerUsername: follower?.username || 'Unknown User',
+      });
 
       return { relationship, notificationDecision };
     } catch (err) {

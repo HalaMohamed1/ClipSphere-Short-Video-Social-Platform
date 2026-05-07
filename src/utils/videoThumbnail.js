@@ -7,10 +7,6 @@ import { randomUUID } from 'crypto';
 
 const execFileAsync = promisify(execFile);
 
-/**
- * Extract one JPEG frame (for feed / poster) using ffmpeg.
- * Seek ~5% into the clip to reduce black intro frames.
- */
 export async function extractVideoThumbnailJpeg(videoPath, durationSec) {
   const outPath = path.join(os.tmpdir(), `clipsphere-thumb-${randomUUID()}.jpg`);
   const safeDuration = Math.max(durationSec || 1, 0.5);
@@ -54,7 +50,7 @@ export function safeUnlink(p) {
     try {
       fs.unlinkSync(p);
     } catch {
-      /* ignore */
+      
     }
   }
 }

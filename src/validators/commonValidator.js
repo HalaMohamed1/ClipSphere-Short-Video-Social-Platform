@@ -35,28 +35,18 @@ export const videoFeedQuerySchema = z.object({
     .max(100, 'Limit cannot exceed 100')
     .default(20),
   category: z
-    .string()
-    .enum(['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational', 'others'], {
-      errorMap: () => ({ message: 'Invalid category' }),
-    })
+    .enum(['music', 'gaming', 'sports', 'tech', 'entertainment', 'educational', 'others'])
     .optional(),
   search: z
     .string()
     .max(200, 'Search query cannot exceed 200 characters')
     .optional(),
   feed: z
-    .string()
-    .enum(['all', 'following'], {
-      errorMap: () => ({ message: 'Invalid feed type' }),
-    })
+    .enum(['all', 'following'])
     .optional(),
   sort: z
-    .string()
-    .enum(['newest', 'trending', 'popular'], {
-      errorMap: () => ({ message: 'Invalid sort option' }),
-    })
-    .default('newest')
-    .optional(),
+    .enum(['newest', 'trending', 'popular'])
+    .default('newest'),
 });
 
 // ============================================================================
@@ -72,12 +62,6 @@ export const mongoIdSchema = z
 // ERROR HANDLING UTILITY
 // ============================================================================
 
-/**
- * Safe validation function that catches Zod errors
- * @param schema - Zod schema
- * @param data - Data to validate
- * @returns Validated data or throws AppError
- */
 export function validateSchemaOrThrow(schema, data, AppError) {
   try {
     return schema.parse(data);

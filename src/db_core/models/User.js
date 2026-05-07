@@ -1,47 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     User:
- *       type: object
- *       required:
- *         - username
- *         - email
- *         - password
- *       properties:
- *         username:
- *           type: string
- *           description: The unique username of the user. (min 3 chars)
- *         email:
- *           type: string
- *           format: email
- *           description: The unique email address of the user.
- *         password:
- *           type: string
- *           format: password
- *           description: Hashed password (not included in JSON responses).
- *         role:
- *           type: string
- *           enum: [user, admin]
- *           default: user
- *         bio:
- *           type: string
- *           maxLength: 500
- *         avatarKey:
- *           type: string
- *           nullable: true
- *         accountStatus:
- *           type: string
- *           enum: [active, suspended, flagged]
- *           default: active
- *         createdAt:
- *           type: string
- *           format: date-time
- */
-
 const userSchema = new mongoose.Schema(
   {
     username: {
@@ -102,7 +61,7 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    /** Available balance in the smallest currency unit (e.g. cents for USD). */
+    
     walletBalance: {
       type: Number,
       default: 0,
