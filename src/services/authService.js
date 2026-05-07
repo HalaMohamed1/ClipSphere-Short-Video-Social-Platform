@@ -110,17 +110,6 @@ export class AuthService {
     return user;
   }
 
-  // Get user by username (public profile)
-  static async getUserProfileByUsername(username) {
-    const user = await User.findOne({ username }).select(
-      '-password -email -notificationPreferences -active'
-    );
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-    return user;
-  }
-
   // Update notification preferences
   static async updatePreferences(userId, preferences) {
     const user = await User.findById(userId);

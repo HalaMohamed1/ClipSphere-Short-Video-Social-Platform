@@ -149,10 +149,6 @@ export class VideoService {
       query.category = filters.category;
     }
 
-    if (filters.userId) {
-      query.user = filters.userId;
-    }
-
     const search =
       typeof filters.search === 'string' && filters.search.trim()
         ? filters.search.trim()
