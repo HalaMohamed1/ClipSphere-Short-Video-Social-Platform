@@ -102,6 +102,12 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    /** Available balance in the smallest currency unit (e.g. cents for USD). */
+    walletBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     notificationPreferences: {
       type: {
         emailOnNewEngagement: {

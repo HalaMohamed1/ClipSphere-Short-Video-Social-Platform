@@ -2,10 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import VideoPlayer from "../../../components/VideoPlayer";
 import LikeButton from "../../../components/LikeButton";
-import FollowButton from "../../../components/FollowButton";
 import ReviewSection from "../../../components/ReviewSection";
 import { apiCall } from "../../../lib/api";
 import { useAuth } from "../../../hooks/useAuth";
@@ -71,6 +69,8 @@ export default function VideoDetailPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [tipCents, setTipCents] = useState(500);
+  const [tipBusy, setTipBusy] = useState(false);
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -135,6 +135,7 @@ export default function VideoDetailPage() {
 
   const canEdit = canEditVideo(user, video);
   const canDelete = canDeleteVideo(user, video);
+  const canTip = Boolean(user && video && !isVideoOwner(user, video));
 
   useEffect(() => {
     if (!canEdit) {
@@ -183,6 +184,34 @@ export default function VideoDetailPage() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     void navigator.clipboard.writeText(url);
     alert("Link copied");
+  };
+
+  const formatTipUsd = (cents: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+      cents / 100
+    );
+
+  const handleTipCheckout = async () => {
+    if (!video || !user) return;
+    setTipBusy(true);
+    try {
+      const data = await apiCall<{ url: string }>("/payments/create-checkout-session", {
+        method: "POST",
+        body: JSON.stringify({
+          creatorId: video.user._id,
+          amount: tipCents,
+          videoId: video._id,
+        }),
+      });
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : "Could not start checkout");
+    } finally {
+      setTipBusy(false);
+    }
   };
 
   if (isLoading) {
@@ -263,17 +292,13 @@ export default function VideoDetailPage() {
 
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <Link href={`/profile/${video.user.username}`}>
-              <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-zinc-100 font-medium text-lg hover:border-zinc-500 transition-colors cursor-pointer">
-                {video.user.username.charAt(0).toUpperCase()}
-              </div>
-            </Link>
+            <div className="w-14 h-14 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-zinc-100 font-medium text-lg">
+              {video.user.username.charAt(0).toUpperCase()}
+            </div>
             <div>
-              <Link href={`/profile/${video.user.username}`}>
-                <p className="font-semibold text-white text-lg hover:text-zinc-300 transition-colors cursor-pointer">
-                  {video.user.username}
-                </p>
-              </Link>
+              <p className="font-semibold text-white text-lg">
+                {video.user.username}
+              </p>
               {video.user.bio && (
                 <p className="text-sm text-gray-400">{video.user.bio}</p>
               )}
@@ -281,7 +306,6 @@ export default function VideoDetailPage() {
           </div>
 
           <div className="flex gap-3 flex-wrap">
-            <FollowButton userId={video.user._id} />
             <LikeButton
               videoId={videoId}
               initialLiked={isLiked}
@@ -291,6 +315,37 @@ export default function VideoDetailPage() {
                 setLikeCount(count);
               }}
             />
+            {canTip && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-violet-500/25 bg-violet-950/20 px-3 py-2">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wide shrink-0">
+                  Tip
+                </span>
+                <div className="flex gap-1">
+                  {[200, 500, 1000].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setTipCents(c)}
+                      className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                        tipCents === c
+                          ? "bg-violet-600 text-white"
+                          : "bg-zinc-800/90 text-zinc-300 hover:bg-zinc-700 border border-zinc-700"
+                      }`}
+                    >
+                      {formatTipUsd(c)}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTipCheckout}
+                  disabled={tipBusy}
+                  className="px-3 py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50"
+                >
+                  {tipBusy ? "Redirecting…" : `Pay ${formatTipUsd(tipCents)}`}
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={copyShareLink}

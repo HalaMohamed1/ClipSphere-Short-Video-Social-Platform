@@ -36,7 +36,8 @@ if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'your_super_secret_jwt_key_change_this_in_production';
 }
 if (!process.env.PORT) {
-  process.env.PORT = 5000;
+  // 5000 is often taken by macOS AirPlay Receiver (Control Center); 5050 avoids EADDRINUSE in local dev.
+  process.env.PORT = 5050;
 }
 
 console.log(` MONGODB_URI: ${process.env.MONGODB_URI}`);
@@ -45,7 +46,6 @@ console.log(`PORT: ${process.env.PORT}`);
 
 // Now import other modules
 import express from 'express';
-import helmet from 'helmet';
 import http from 'http';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
@@ -53,13 +53,10 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
 
 import { connectDB } from './utils/database.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
-import { socketAuthMiddleware, attachSocketInstance } from './middleware/socketAuth.js';
-import { initializeSocketEvents } from './db_core/socketEvents.js';
+import { initializeSocket } from './io/socketManager.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -67,109 +64,37 @@ import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
 const app = express();
-const server = http.createServer(app);
-const PORT = process.env.PORT || 5000;
-
-// ============= SOCKET.IO SETUP =============
-
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: (process.env.CLIENT_ORIGIN || 'http://localhost:3000').split(',').map((o) => o.trim()),
-    credentials: true,
-    methods: ['GET', 'POST'],
-  },
-  transports: ['websocket', 'polling'],
-});
-
-// Apply Socket.io authentication middleware
-io.use(socketAuthMiddleware);
-io.use(attachSocketInstance(io));
-
-// Initialize Socket.io event handlers
-initializeSocketEvents(io);
+const PORT = Number(process.env.PORT) || 5050;
 
 // ============= MIDDLEWARE =============
-
-// ============= SECURITY MIDDLEWARE =============
-
-// Helmet.js - Security headers
-const isProduction = process.env.NODE_ENV === 'production';
-
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      mediaSrc: ["'self'", 'blob:'], // Allow video/audio from same origin and blob URLs
-      connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'], // Allow WebSocket connections in development
-      frameSrc: ["'self'"], // Prevent clickjacking
-    },
-  },
-  crossOriginResourcePolicy: {
-    policy: 'cross-origin', // Allow cross-origin video streaming
-  },
-  // HSTS - only in production to avoid issues in development
-  hsts: isProduction ? {
-    maxAge: 31536000, // 1 year
-    includeSubDomains: true,
-    preload: true,
-  } : false,
-  // X-Content-Type-Options - prevent MIME type sniffing
-  noSniff: true,
-  // X-Frame-Options - prevent clickjacking
-  frameguard: {
-    action: 'deny',
-  },
-  // X-XSS-Protection - enable XSS protection
-  xssFilter: true,
-  // Referrer-Policy
-  referrerPolicy: {
-    policy: 'no-referrer',
-  },
-}));
 
 // Request logging
 app.use(morgan('combined'));
 
-// ============= CORS MIDDLEWARE =============
-
-// Parse and normalize client origins
 const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
 
-// CORS configuration
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests without origin (like mobile apps or curl requests)
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      // Check if origin is in allowed list or if we're in development mode
-      if (clientOrigins.includes(origin) || !isProduction) {
-        callback(null, true);
-      } else {
-        callback(new Error(`CORS policy: origin ${origin} is not allowed`));
-      }
-    },
+    origin: clientOrigins.length ? clientOrigins : true,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    maxAge: 3600, // Cache preflight requests for 1 hour
-    optionsSuccessStatus: 200, // For legacy browsers
   })
 );
-
-// Cookie parser
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  if (typeof req.originalUrl === 'string' && req.originalUrl.startsWith('/api')) {
+    res.set('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+  }
+  next();
+});
 
 // Mount webhook routes BEFORE express.json() so Stripe can get the raw body
 app.use('/api/v1/webhooks', webhookRoutes);
@@ -196,7 +121,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.SERVER_URL || 'http://localhost:5000',
+        url: process.env.SERVER_URL || 'http://localhost:5050',
         description: 'Development Server',
       },
     ],
@@ -239,6 +164,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // ============= ERROR HANDLING =============
 
@@ -255,8 +181,11 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDB();
 
-    // Start listening on HTTP server (which includes Socket.io)
-    server.listen(PORT, () => {
+    // Initialize Socket.IO
+    initializeSocket(httpServer);
+
+    // Start listening
+    const server = app.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║   ClipSphere Backend Server Started    ║
@@ -264,9 +193,26 @@ const startServer = async () => {
 ║  Port:     ${PORT}
 ║  ENV:      ${process.env.NODE_ENV}
 ║  API Docs: http://localhost:${PORT}/api-docs
-║  Socket.io: ws://localhost:${PORT}
+║  WebSocket: ws://localhost:${PORT}
 ╚════════════════════════════════════════╝
       `);
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`
+❌ Port ${PORT} is already in use.
+
+  • Pick another port: PORT=5051 npm start
+    (also set NEXT_PUBLIC_API_URL in nextjs-frontend/.env.local to match)
+
+  • If you need port 5000: on macOS, disable AirPlay Receiver
+    System Settings → General → AirDrop & Handoff → AirPlay Receiver → Off
+
+`);
+        process.exit(1);
+      }
+      throw err;
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);
@@ -283,4 +229,3 @@ process.on('unhandledRejection', (err) => {
 startServer();
 
 export default app;
-export { server, io };

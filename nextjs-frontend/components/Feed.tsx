@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { apiCall } from "../lib/api";
 import { useAuth } from "../hooks/useAuth";
 import { FeedSkeletonGrid, LoadMoreSkeleton } from "./SkeletonLoader";
@@ -39,7 +39,6 @@ function formatDuration(sec: number) {
 
 export default function Feed() {
   const { user } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQ = (searchParams.get("q") ?? "").trim();
 
@@ -183,31 +182,13 @@ export default function Feed() {
         {videos.map((video) => {
           const creator = video.user?.username || video.user?.name || "Creator";
           const hasThumb = Boolean(video.thumbnailUrl?.trim());
-
-          const handleVideoClick = (e: React.MouseEvent) => {
-            e.preventDefault();
-            router.push(`/video/${video._id}`);
-          };
-
-          const handleProfileClick = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            router.push(`/profile/${creator}`);
-          };
-
           return (
-            <div
+            <Link
+              href={`/video/${video._id}`}
               key={video._id}
-              onClick={handleVideoClick}
-              className="group block cursor-pointer"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  handleVideoClick(e as any);
-                }
-              }}
+              className="group block"
             >
-              <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 transition-colors group-hover:border-zinc-600">
+              <div className="relative aspect-[9/16] rounded-xl overflow-hidden bg-zinc-900 border border-white/10 shadow-lg shadow-black/40 transition-colors group-hover:border-white/20">
                 {hasThumb ? (
                   <img
                     src={video.thumbnailUrl}
@@ -237,48 +218,26 @@ export default function Feed() {
                   </div>
                 )}
 
-                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-zinc-950/20 pointer-events-none" />
 
-                <div className="absolute top-3 right-3 bg-zinc-950 text-zinc-300 text-[11px] font-medium px-2 py-1 rounded border border-zinc-700">
+                <div className="absolute top-3 right-3 backdrop-blur-md bg-zinc-950/45 text-zinc-100 text-[11px] font-medium px-2.5 py-1 rounded-lg border border-white/10 shadow-sm">
                   {formatDuration(video.duration || 0)}
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-4 flex items-end gap-3 bg-zinc-950/95 border-t border-zinc-800">
-                  <div
-                    onClick={handleProfileClick}
-                    className="relative cursor-pointer"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        handleProfileClick(e as any);
-                      }
-                    }}
-                  >
-                    <div className="w-11 h-11 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-medium text-zinc-200 border border-zinc-600 hover:border-zinc-500 transition-colors">
+                <div className="absolute bottom-0 left-0 w-full p-3 sm:p-4 flex items-end gap-3 backdrop-blur-lg bg-zinc-950/35 border-t border-white/10">
+                  <div className="relative">
+                    <div className="w-11 h-11 rounded-full bg-zinc-800/90 backdrop-blur-sm flex items-center justify-center text-sm font-medium text-zinc-100 border border-white/15 shadow-inner">
                       {creator.charAt(0).toUpperCase()}
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-zinc-100 font-medium text-sm leading-snug mb-1.5 line-clamp-2">
+                    <h3 className="text-zinc-50 font-medium text-sm leading-snug mb-1 line-clamp-2 drop-shadow-md">
                       {video.title}
                     </h3>
-                    <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                      <div
-                        onClick={handleProfileClick}
-                        className="truncate pr-2 hover:text-zinc-300 transition-colors cursor-pointer"
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            handleProfileClick(e as any);
-                          }
-                        }}
-                      >
-                        {creator}
-                      </div>
-                      <span className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center justify-between text-[11px] text-zinc-300/90">
+                      <span className="truncate pr-2">{creator}</span>
+                      <span className="flex items-center gap-1 shrink-0 text-zinc-400">
                         {video.views > 1000
                           ? `${(video.views / 1000).toFixed(1)}k`
                           : video.views}{" "}
@@ -288,7 +247,7 @@ export default function Feed() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
