@@ -59,13 +59,17 @@ const getAuthToken = (): string | null => {
 
 export const initializeSocket = (): Socket => {
   if (socket && socket.connected) {
+    console.log('[Socket.IO] Already connected, reusing socket');
     return socket;
   }
 
   const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
   const token = getAuthToken();
 
+  console.log(`[Socket.IO] Connecting to ${socketUrl} with auth token: ${token ? 'present' : 'missing'}`);
+
   socket = io(socketUrl, {
+    path: '/socket.io/',
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
@@ -83,12 +87,16 @@ export const initializeSocket = (): Socket => {
     console.log('[Socket.IO] Connected to server:', socket?.id);
   });
 
+  socket.on('connect_success', (data) => {
+    console.log('[Socket.IO] Connection success:', data);
+  });
+
   socket.on('connect_error', (error) => {
     console.error('[Socket.IO] Connection error:', error);
   });
 
-  socket.on('disconnect', () => {
-    console.log('[Socket.IO] Disconnected from server');
+  socket.on('disconnect', (reason) => {
+    console.log('[Socket.IO] Disconnected from server:', reason);
   });
 
   socket.on('error', (error) => {
