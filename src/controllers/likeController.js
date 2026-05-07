@@ -1,9 +1,6 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { AppError } from '../utils/appError.js';
 import { LikeService } from '../services/likeService.js';
-import { VideoService } from '../services/videoService.js';
-import { emitNewLikeEvent } from '../utils/engagementEmitter.js';
-import { io } from '../index.js';
 import { emitNewLike, emitUnlike } from '../io/socketManager.js';
 import { Video } from '../db_core/models/Video.js';
 import { User } from '../db_core/models/User.js';
@@ -17,23 +14,18 @@ export class LikeController {
 
     const like = await LikeService.likeVideo(userId, videoId);
 
-    // Emit socket event to video owner
-    try {
-      const video = await VideoService.getVideoById(videoId);
-      if (video && video.user) {
-        const videoOwnerId = video.user._id;
-        emitNewLikeEvent(
-          io,
-          videoOwnerId,
-          userId,
-          req.user.username,
-          videoId,
-          video.title
-        );
-      }
-    } catch (error) {
-      console.error('Error emitting like event:', error.message);
-      // Don't fail the request if socket emission fails
+    // Get video and liker details for socket event
+    const video = await Video.findById(videoId).populate('user', '_id');
+    const liker = await User.findById(userId).select('username');
+
+    // Emit real-time like event to video owner
+    if (video && video.user) {
+      emitNewLike(video.user._id, {
+        likerId: userId,
+        liker: liker?.username || 'Anonymous',
+        videoId: videoId,
+        videoTitle: video.title,
+      });
     }
 
     res.status(201).json({
