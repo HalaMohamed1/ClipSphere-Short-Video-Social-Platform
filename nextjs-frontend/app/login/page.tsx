@@ -16,6 +16,12 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/");
+    }
+  }, [user, authLoading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -36,6 +42,11 @@ function LoginForm() {
       if (!res.ok) {
         throw new Error(data.message || "Login failed");
       }
+      
+      if (data.data?.token) {
+        localStorage.setItem('jwtToken', data.data.token);
+      }
+      
       window.location.href = callbackUrl;
     } catch (err: unknown) {
       if (err instanceof Error) {
