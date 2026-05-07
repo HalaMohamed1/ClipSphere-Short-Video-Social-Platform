@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import "./globals.css";
 import Navbar from "../components/Navbar";
+import LiveLikeNotification from "../components/LiveLikeNotification";
 
 export const metadata = {
   title: "ClipSphere | Short Video Social Platform",
@@ -26,6 +27,8 @@ export default function RootLayout({
         <main className="pt-24 pb-16 min-h-screen">
           {children}
         </main>
+
+        <LiveLikeNotification />
       </body>
     </html>
   );

@@ -4,6 +4,10 @@ import { LikeService } from '../services/likeService.js';
 import { VideoService } from '../services/videoService.js';
 import { emitNewLikeEvent } from '../utils/engagementEmitter.js';
 import { io } from '../index.js';
+import { emitNewLike, emitUnlike } from '../io/socketManager.js';
+import { Video } from '../db_core/models/Video.js';
+import { User } from '../db_core/models/User.js';
+import { likesPaginationSchema } from '../validators/likeValidator.js';
 
 export class LikeController {
   // Like a video
@@ -46,6 +50,20 @@ export class LikeController {
 
     const result = await LikeService.unlikeVideo(userId, videoId);
 
+    // Get video and liker details for socket event
+    const video = await Video.findById(videoId).populate('user', '_id');
+    const liker = await User.findById(userId).select('username');
+
+    // Emit real-time unlike event to video owner
+    if (video && video.user) {
+      emitUnlike(video.user._id, {
+        likerId: userId,
+        liker: liker?.username || 'Anonymous',
+        videoId: videoId,
+        videoTitle: video.title,
+      });
+    }
+
     res.status(200).json({
       status: 'success',
       message: result.message,
@@ -68,10 +86,9 @@ export class LikeController {
   // Get all likes for a video
   static getVideoLikes = catchAsync(async (req, res) => {
     const { videoId } = req.params;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const validatedQuery = likesPaginationSchema.parse(req.query);
 
-    const result = await LikeService.getVideoLikes(videoId, { page, limit });
+    const result = await LikeService.getVideoLikes(videoId, validatedQuery);
 
     res.status(200).json({
       status: 'success',
@@ -83,10 +100,9 @@ export class LikeController {
   // Get all videos liked by user
   static getUserLikedVideos = catchAsync(async (req, res) => {
     const userId = req.user._id;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const validatedQuery = likesPaginationSchema.parse(req.query);
 
-    const result = await LikeService.getUserLikedVideos(userId, { page, limit });
+    const result = await LikeService.getUserLikedVideos(userId, validatedQuery);
 
     res.status(200).json({
       status: 'success',

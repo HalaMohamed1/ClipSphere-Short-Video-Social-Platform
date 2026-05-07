@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { API_BASE } from "@/lib/api";
+import { loginSchema, formatValidationErrors, type LoginData } from "@/lib/validators";
 
 function LoginForm() {
   const router = useRouter();
@@ -14,6 +15,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,13 +29,18 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setErrors({});
     setLoading(true);
+
     try {
+      // Validate input with Zod
+      const validatedData = loginSchema.parse({ email, password });
+
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(validatedData),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -48,7 +55,25 @@ function LoginForm() {
       
       window.location.href = callbackUrl;
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      if (err instanceof Error) {
+        // Check if it's a Zod validation error
+        if (err.message.includes('[') && err.message.includes(']')) {
+          try {
+            const zodError = JSON.parse(err.message);
+            if (zodError.errors) {
+              setErrors(formatValidationErrors(zodError));
+            } else {
+              setError(err.message);
+            }
+          } catch {
+            setError(err.message);
+          }
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Login failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -83,8 +108,11 @@ function LoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none"
+            className={`w-full rounded-md bg-zinc-900 border px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none ${
+              errors.email ? 'border-red-500' : 'border-zinc-800'
+            }`}
           />
+          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
         </div>
         <div>
           <label className="block text-sm text-gray-300 mb-1">Password</label>
@@ -96,6 +124,7 @@ function LoginForm() {
             autoComplete="current-password"
             className="w-full rounded-md bg-zinc-900 border border-zinc-800 px-4 py-2 text-white focus:ring-1 focus:ring-zinc-600 outline-none"
           />
+          {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
         </div>
         <button
           type="submit"
