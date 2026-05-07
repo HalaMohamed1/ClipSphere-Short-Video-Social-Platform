@@ -19,7 +19,6 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
       router.push("/");
@@ -47,10 +46,8 @@ function LoginForm() {
         throw new Error(data.message || "Login failed");
       }
       
-      // Store token in localStorage for Socket.io authentication
       if (data.data?.token) {
         localStorage.setItem('jwtToken', data.data.token);
-        console.log('✅ Token stored in localStorage for Socket.io');
       }
       
       window.location.href = callbackUrl;
