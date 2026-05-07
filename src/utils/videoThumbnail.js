@@ -19,8 +19,10 @@ export async function extractVideoThumbnailJpeg(videoPath, durationSec) {
     Math.max(0.2, safeDuration - 0.1)
   );
 
+  const ffmpegBin = process.env.FFMPEG_PATH || 'ffmpeg';
+
   await execFileAsync(
-    'ffmpeg',
+    ffmpegBin,
     [
       '-hide_banner',
       '-loglevel',

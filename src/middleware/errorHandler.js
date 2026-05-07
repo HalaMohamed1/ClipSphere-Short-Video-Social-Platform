@@ -28,10 +28,11 @@ export const globalErrorHandler = (err, req, res, next) => {
     err = new AppError('Token has expired', 401);
   }
 
-  // Zod validation error
+  // Zod validation error (Zod 3 uses `issues`)
   if (err.name === 'ZodError') {
-    const errors = err.errors.map((error) => ({
-      path: error.path.join('.'),
+    const issues = err.issues || err.errors || [];
+    const errors = issues.map((error) => ({
+      path: Array.isArray(error.path) ? error.path.join('.') : String(error.path),
       message: error.message,
     }));
     return res.status(400).json({

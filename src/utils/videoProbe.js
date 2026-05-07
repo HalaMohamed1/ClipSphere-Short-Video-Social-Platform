@@ -1,5 +1,12 @@
 import ffmpeg from 'fluent-ffmpeg';
 
+if (process.env.FFMPEG_PATH) {
+  ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+}
+if (process.env.FFPROBE_PATH) {
+  ffmpeg.setFfprobePath(process.env.FFPROBE_PATH);
+}
+
 /**
  * Returns duration in seconds (float) using ffprobe.
  */

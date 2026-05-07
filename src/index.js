@@ -36,7 +36,8 @@ if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'your_super_secret_jwt_key_change_this_in_production';
 }
 if (!process.env.PORT) {
-  process.env.PORT = 5000;
+  // 5000 is often taken by macOS AirPlay Receiver (Control Center); 5050 avoids EADDRINUSE in local dev.
+  process.env.PORT = 5050;
 }
 
 console.log(` MONGODB_URI: ${process.env.MONGODB_URI}`);
@@ -63,11 +64,11 @@ import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import videoRoutes from './routes/videoRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
 const app = express();
-const httpServer = http.createServer(app);
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5050;
 
 // ============= MIDDLEWARE =============
 
@@ -86,6 +87,14 @@ app.use(
   })
 );
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  if (typeof req.originalUrl === 'string' && req.originalUrl.startsWith('/api')) {
+    res.set('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+  }
+  next();
+});
 
 // Mount webhook routes BEFORE express.json() so Stripe can get the raw body
 app.use('/api/v1/webhooks', webhookRoutes);
@@ -112,7 +121,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.SERVER_URL || 'http://localhost:5000',
+        url: process.env.SERVER_URL || 'http://localhost:5050',
         description: 'Development Server',
       },
     ],
@@ -155,6 +164,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // ============= ERROR HANDLING =============
 
@@ -175,7 +185,7 @@ const startServer = async () => {
     initializeSocket(httpServer);
 
     // Start listening
-    httpServer.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║   ClipSphere Backend Server Started    ║
@@ -186,6 +196,23 @@ const startServer = async () => {
 ║  WebSocket: ws://localhost:${PORT}
 ╚════════════════════════════════════════╝
       `);
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`
+❌ Port ${PORT} is already in use.
+
+  • Pick another port: PORT=5051 npm start
+    (also set NEXT_PUBLIC_API_URL in nextjs-frontend/.env.local to match)
+
+  • If you need port 5000: on macOS, disable AirPlay Receiver
+    System Settings → General → AirDrop & Handoff → AirPlay Receiver → Off
+
+`);
+        process.exit(1);
+      }
+      throw err;
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);

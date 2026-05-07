@@ -131,6 +131,12 @@ export default function Navbar() {
                 >
                   Upload
                 </Link>
+                <Link
+                  href="/creator/wallet"
+                  className="hidden sm:block text-sm font-medium text-zinc-300 hover:text-white px-3 py-2 rounded-md border border-zinc-800 hover:bg-zinc-900"
+                >
+                  Wallet
+                </Link>
                 {user.role === "admin" && (
                   <Link
                     href="/admin"
