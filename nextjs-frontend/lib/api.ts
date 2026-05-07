@@ -2,7 +2,7 @@ const RAW = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) 
 const API_BASE = (
   RAW
     ? RAW.replace(/\/$/, "")
-    : "http://localhost:5050/api/v1"
+    : "http://localhost:5000/api/v1"
 ).replace(/\/api\/?v1$/i, "") + "/api/v1";
 
 export interface ApiResponse<T> {
@@ -42,7 +42,7 @@ export async function apiCall<T>(
       const err = await response.json();
       message = err.message || message;
     } catch {
-      /* ignore */
+      
     }
     throw new Error(message);
   }
@@ -51,7 +51,6 @@ export async function apiCall<T>(
   return result.data as T;
 }
 
-/** Same as apiCall; adds Bearer when token is provided (cookie auth is used regardless). */
 export async function apiCallWithAuth<T>(
   endpoint: string,
   token: string | null | undefined,

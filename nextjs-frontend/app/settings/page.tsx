@@ -30,7 +30,7 @@ export default function SettingsPage() {
           email: { ...(np as { email?: Record<string, boolean> }).email },
         });
       } catch {
-        /* ignore */
+        
       }
     };
     load();

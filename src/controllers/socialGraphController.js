@@ -1,5 +1,7 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import { SocialGraphService } from '../services/socialGraphService.js';
+import { emitNewFollower } from '../io/socketManager.js';
+import { User } from '../db_core/models/User.js';
 
 export class SocialGraphController {
   static followUser = catchAsync(async (req, res) => {
@@ -9,6 +11,15 @@ export class SocialGraphController {
       req.user._id,
       targetId
     );
+
+    // Emit socket event for new follower
+    const follower = await User.findById(req.user._id).select('username');
+    if (follower) {
+      emitNewFollower(targetId, {
+        followerId: req.user._id,
+        followerUsername: follower.username || 'Anonymous',
+      });
+    }
 
     res.status(201).json({
       status: 'success',

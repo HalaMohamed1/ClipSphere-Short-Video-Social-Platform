@@ -43,9 +43,6 @@ export async function deleteObject({ bucket, key }) {
   await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
 
-/**
- * Stream or range-read an object from MinIO (server-side only; never expose presigned URLs to the browser).
- */
 export async function getObjectFromBucket({ bucket, key, range }) {
   if (!key) return null;
   const client = getS3Client();
@@ -61,9 +58,6 @@ export async function getObjectFromBucket({ bucket, key, range }) {
   };
 }
 
-/**
- * Time-limited presigned GET URL (private objects).
- */
 export async function getPresignedGetUrl(bucket, key, expiresInSeconds = 3600) {
   if (!key) return null;
   const client = getS3Client();

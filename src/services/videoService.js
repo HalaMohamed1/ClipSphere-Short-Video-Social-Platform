@@ -14,7 +14,6 @@ import { probeVideoDurationSeconds } from '../utils/videoProbe.js';
 import { extractVideoThumbnailJpeg, safeUnlink } from '../utils/videoThumbnail.js';
 import { cleanupTemp } from '../middleware/uploadVideo.js';
 
-/** AWS SDK may wrap Node system errors behind `cause`. */
 function isConnectionRefusedError(e) {
   let x = e;
   for (let i = 0; i < 6 && x; i++) {
@@ -37,7 +36,6 @@ function getVideosMediaBasePath() {
   return `${base}/api/v1/videos`;
 }
 
-/** API URLs so the browser never talks to MinIO directly (server streams from S3). */
 export function attachMediaUrls(videoDoc) {
   const v = videoDoc?.toObject ? videoDoc.toObject() : { ...videoDoc };
   const id = v._id?.toString?.() ?? String(v._id);
@@ -56,7 +54,6 @@ export function attachMediaUrlsMany(docs) {
   return docs.map((d) => attachMediaUrls(d));
 }
 
-/** Who may read streamed media (public, or owner/admin for private; admin for flagged). */
 export function canAccessVideoMedia(req, video) {
   if (!video) return false;
   if (video.status === 'flagged') {
@@ -73,9 +70,7 @@ export function canAccessVideoMedia(req, video) {
 }
 
 export class VideoService {
-  /**
-   * Multipart upload: probe duration, push to MinIO, then persist Mongo (Phase 2).
-   */
+  
   static async createVideoFromUpload({ userId, file, body }) {
     if (!file?.path) {
       throw new AppError('Video file is required', 400);

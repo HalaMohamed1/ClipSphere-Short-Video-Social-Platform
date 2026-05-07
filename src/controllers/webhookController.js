@@ -1,12 +1,6 @@
 import Stripe from 'stripe';
 import { PaymentService } from '../services/paymentService.js';
 
-/**
- * Stripe webhooks — raw body parsing is configured on the router.
- * Fulfillment aligns with https://docs.stripe.com/payments/checkout/fulfillment#webhooks
- * (retrieve session, respect payment_status, handle async_payment_succeeded).
- */
-
 let stripe;
 
 const getStripe = () => {
@@ -67,7 +61,7 @@ export const handleStripeWebhook = async (req, res) => {
       }
     } catch (error) {
       console.error('Stripe webhook fulfillment error:', error);
-      /** 500 → Stripe retries; important if DB was transiently down */
+      
       return res.status(500).json({ error: 'Fulfillment failed' });
     }
   }

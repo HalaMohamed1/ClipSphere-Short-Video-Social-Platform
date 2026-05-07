@@ -1,46 +1,6 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     Video:
- *       type: object
- *       required:
- *         - title
- *         - user
- *         - videoUrl
- *       properties:
- *         title:
- *           type: string
- *           description: The title of the video.
- *         user:
- *           type: string
- *           description: The ID of the user who uploaded the video.
- *         videoUrl:
- *           type: string
- *           format: url
- *           description: The public URL to the video file.
- *         thumbnailUrl:
- *           type: string
- *           format: url
- *           description: The URL to the video thumbnail image.
- *         category:
- *           type: string
- *           enum: [music, gaming, sports, tech, entertainment, educational]
- *           default: entertainment
- *         views:
- *           type: number
- *           default: 0
- *         likes:
- *           type: number
- *           default: 0
- *         createdAt:
- *           type: string
- *           format: date-time
- */
-
 const videoSchema = new mongoose.Schema(
   {
     title: {
@@ -59,7 +19,7 @@ const videoSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Video must belong to a user'],
     },
-    /** MinIO object key (private bucket). Use with presigned GET. */
+    
     videoKey: {
       type: String,
       default: null,
@@ -68,7 +28,7 @@ const videoSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    /** Legacy / external URL, or redundant when videoKey is set (resolved via presign in API). */
+    
     videoUrl: {
       type: String,
       default: null,

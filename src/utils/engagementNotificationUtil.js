@@ -2,10 +2,6 @@ import { User } from '../db_core/models/User.js';
 import { EmailService } from '../services/emailService.js';
 import { resolveNotificationChannels } from './notificationEligibility.js';
 
-/**
- * Send engagement notifications to video owner based on nested notification preferences.
- * @param {'like'|'review'} engagementType
- */
 export async function sendEngagementNotification(
   videoOwnerId,
   engagementType,

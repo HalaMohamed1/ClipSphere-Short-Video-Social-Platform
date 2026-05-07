@@ -1,34 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     Review:
- *       type: object
- *       required:
- *         - user
- *         - video
- *         - rating
- *       properties:
- *         user:
- *           type: string
- *           description: The ID of the user who left the review.
- *         video:
- *           type: string
- *           description: The ID of the video being reviewed.
- *         rating:
- *           type: number
- *           format: float
- *           description: Rating given to the video (1 to 5).
- *         comment:
- *           type: string
- *           description: Text comment for the video.
- *         createdAt:
- *           type: string
- *           format: date-time
- */
-
 const reviewSchema = new mongoose.Schema(
   {
     user: {
@@ -65,7 +36,6 @@ const reviewSchema = new mongoose.Schema(
 reviewSchema.index({ user: 1, video: 1 }, { unique: true });
 
 reviewSchema.index({ video: 1, rating: -1 });
-
 
 reviewSchema.pre('save', function (next) {
   if (this.isModified('comment') && !this.isNew) {

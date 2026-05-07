@@ -2,31 +2,28 @@
 
 import React from "react";
 
-/**
- * ReviewCardSkeleton - Mimics the structure of a review/comment card
- */
 export function ReviewCardSkeleton() {
   return (
     <div className="border border-zinc-800 rounded-lg p-4 bg-zinc-900/50 animate-fade-in">
       <div className="flex items-start gap-3">
-        {/* Avatar skeleton */}
+        {}
         <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0" />
 
-        {/* Content skeleton */}
+        {}
         <div className="flex-1 min-w-0 space-y-2">
-          {/* Username and rating */}
+          {}
           <div className="flex items-center gap-2">
             <div className="h-3 bg-zinc-800 rounded w-1/4" />
             <div className="h-3 bg-zinc-800 rounded w-8" />
           </div>
 
-          {/* Review text */}
+          {}
           <div className="space-y-1">
             <div className="h-3 bg-zinc-800 rounded w-full" />
             <div className="h-3 bg-zinc-800 rounded w-5/6" />
           </div>
 
-          {/* Date */}
+          {}
           <div className="h-2.5 bg-zinc-800 rounded w-1/6" />
         </div>
       </div>
@@ -34,9 +31,6 @@ export function ReviewCardSkeleton() {
   );
 }
 
-/**
- * ReviewsSectionSkeleton - Renders multiple review skeletons
- */
 export function ReviewsSectionSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="space-y-3">
@@ -47,21 +41,18 @@ export function ReviewsSectionSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-/**
- * ProfileHeaderSkeleton - For user profile pages
- */
 export function ProfileHeaderSkeleton() {
   return (
     <div className="space-y-4 pb-8 border-b border-zinc-800">
-      {/* Cover image skeleton */}
+      {}
       <div className="w-full h-32 bg-gradient-to-r from-zinc-800 via-zinc-700 to-zinc-800 bg-[length:200%_100%] animate-shimmer rounded-lg" />
 
-      {/* Profile info */}
+      {}
       <div className="flex items-start gap-4">
-        {/* Avatar */}
+        {}
         <div className="w-20 h-20 rounded-full bg-zinc-800 border-2 border-zinc-700 flex-shrink-0" />
 
-        {/* Text content */}
+        {}
         <div className="flex-1 space-y-2 pt-2">
           <div className="h-5 bg-zinc-800 rounded w-1/4" />
           <div className="h-3 bg-zinc-800 rounded w-1/3" />
@@ -72,9 +63,6 @@ export function ProfileHeaderSkeleton() {
   );
 }
 
-/**
- * SearchResultsSkeleton - For search results page
- */
 export function SearchResultsSkeleton({ count = 8 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -86,12 +74,12 @@ export function SearchResultsSkeleton({ count = 8 }: { count?: number }) {
           <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800">
             <div className="w-full h-full bg-gradient-to-r from-zinc-800 via-zinc-700 to-zinc-800 bg-[length:200%_100%] animate-shimmer" />
 
-            {/* Duration badge */}
+            {}
             <div className="absolute top-3 right-3 bg-zinc-950 rounded border border-zinc-700">
               <div className="h-5 w-12 bg-zinc-800 rounded" />
             </div>
 
-            {/* Bottom overlay */}
+            {}
             <div className="absolute bottom-0 left-0 w-full p-4 bg-zinc-950/95 border-t border-zinc-800">
               <div className="flex items-end gap-3">
                 <div className="w-11 h-11 rounded-full bg-zinc-800 border border-zinc-700 flex-shrink-0" />
@@ -108,16 +96,13 @@ export function SearchResultsSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
-/**
- * TableRowSkeleton - For data tables and lists
- */
 export function TableRowSkeleton() {
   return (
     <div className="h-12 px-4 py-3 border-b border-zinc-800 flex items-center gap-4 bg-zinc-900/50 animate-fade-in">
-      {/* Checkbox */}
+      {}
       <div className="w-5 h-5 bg-zinc-800 rounded flex-shrink-0" />
 
-      {/* Columns */}
+      {}
       <div className="flex-1 flex gap-4">
         <div className="h-3 bg-zinc-800 rounded w-1/4" />
         <div className="h-3 bg-zinc-800 rounded w-1/3" />
@@ -125,15 +110,12 @@ export function TableRowSkeleton() {
         <div className="h-3 bg-zinc-800 rounded w-1/6" />
       </div>
 
-      {/* Actions */}
+      {}
       <div className="w-8 h-8 bg-zinc-800 rounded" />
     </div>
   );
 }
 
-/**
- * ListSkeleton - Generic list with multiple items
- */
 export function ListSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="space-y-2">
@@ -144,9 +126,6 @@ export function ListSkeleton({ count = 5 }: { count?: number }) {
   );
 }
 
-/**
- * CardGridSkeleton - Generic grid layout
- */
 export function CardGridSkeleton({ count = 12 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -160,9 +139,6 @@ export function CardGridSkeleton({ count = 12 }: { count?: number }) {
   );
 }
 
-/**
- * FormFieldSkeleton - For form sections
- */
 export function FormFieldSkeleton() {
   return (
     <div className="space-y-2">
@@ -172,9 +148,6 @@ export function FormFieldSkeleton() {
   );
 }
 
-/**
- * FormSkeleton - Multiple form fields
- */
 export function FormSkeleton({ fieldCount = 4 }: { fieldCount?: number }) {
   return (
     <div className="space-y-4">
@@ -185,9 +158,6 @@ export function FormSkeleton({ fieldCount = 4 }: { fieldCount?: number }) {
   );
 }
 
-/**
- * TextBlockSkeleton - Multiple text lines
- */
 export function TextBlockSkeleton({ lines = 3 }: { lines?: number }) {
   return (
     <div className="space-y-2">
@@ -202,9 +172,6 @@ export function TextBlockSkeleton({ lines = 3 }: { lines?: number }) {
   );
 }
 
-/**
- * HeaderSkeleton - For page headers
- */
 export function HeaderSkeleton() {
   return (
     <div className="space-y-3 mb-8">

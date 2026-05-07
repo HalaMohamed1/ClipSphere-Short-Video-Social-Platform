@@ -8,7 +8,6 @@ import { createVideoSchema, updateVideoSchema } from '../validators/videoValidat
 import { videoFeedQuerySchema, paginationSchema } from '../validators/commonValidator.js';
 
 export class VideoController {
-  /** Multipart upload: video file + title/description (MinIO + ffprobe). */
   static uploadVideo = catchAsync(async (req, res) => {
     if (!req.file) {
       throw new AppError('Video file is required (field name: video)', 400);
@@ -27,12 +26,9 @@ export class VideoController {
     });
   });
 
-  // Create a new video
   static createVideo = catchAsync(async (req, res) => {
-    // Validate input with Zod
     const validatedData = createVideoSchema.parse(req.body);
 
-    // Add user ID
     const videoData = {
       ...validatedData,
       user: req.user._id,
@@ -47,7 +43,6 @@ export class VideoController {
     });
   });
 
-  // Get all public videos (feed)
   static getPublicVideos = catchAsync(async (req, res) => {
     const validatedQuery = videoFeedQuerySchema.parse(req.query);
 
@@ -60,7 +55,6 @@ export class VideoController {
     });
   });
 
-  /** Videos from users the current user follows (Phase 2). */
   static getFollowingFeed = catchAsync(async (req, res) => {
     const validatedQuery = paginationSchema.parse(req.query);
     const search = req.query.search ? { search: req.query.search } : {};
@@ -77,7 +71,6 @@ export class VideoController {
     });
   });
 
-  /** Stream video from MinIO via API (browser never hits MinIO). Supports Range for seeking. */
   static streamVideo = catchAsync(async (req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -133,7 +126,6 @@ export class VideoController {
     result.body.pipe(res);
   });
 
-  /** Thumbnail image from MinIO via API. */
   static serveThumbnail = catchAsync(async (req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -171,7 +163,6 @@ export class VideoController {
     result.body.pipe(res);
   });
 
-  // Get a single video by ID
   static getVideoById = catchAsync(async (req, res) => {
     const video = await VideoService.getVideoById(req.params.id);
 
@@ -181,7 +172,6 @@ export class VideoController {
     });
   });
 
-  // Update video (owner only; enforced by assertVideoOwner middleware)
   static updateVideo = catchAsync(async (req, res) => {
     const validatedData = updateVideoSchema.parse(req.body);
 
@@ -194,7 +184,6 @@ export class VideoController {
     });
   });
 
-  // Delete video (owner or admin; enforced by assertVideoOwnerOrAdmin middleware)
   static deleteVideo = catchAsync(async (req, res) => {
     await VideoService.deleteVideo(req.video._id);
 

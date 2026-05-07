@@ -1,19 +1,14 @@
-// MUST load dotenv before importing other modules
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { setServers, setDefaultResultOrder } from 'dns';
 
-// Force Google DNS to resolve MongoDB Atlas SRV records (fixes querySrv ECONNREFUSED)
 setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 setDefaultResultOrder('ipv4first');
 
-
-// Setup __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env file from project root (one level up from src/)
 const envPath = path.resolve(__dirname, '..', '.env');
 console.log(` Loading .env from: ${envPath}`);
 
@@ -24,7 +19,6 @@ if (result.error) {
   console.log(` .env file loaded. Parsed ${Object.keys(result.parsed || {}).length} variables`);
 }
 
-// Manually set from process.env or use defaults
 if (!process.env.MONGODB_URI) {
   process.env.MONGODB_URI = 'mongodb://localhost:27017/clipsphere';
   console.log('  MONGODB_URI not found, using default: mongodb://localhost:27017/clipsphere');
@@ -36,7 +30,6 @@ if (!process.env.JWT_SECRET) {
   process.env.JWT_SECRET = 'your_super_secret_jwt_key_change_this_in_production';
 }
 if (!process.env.PORT) {
-  // 5000 is often taken by macOS AirPlay Receiver (Control Center); 5050 avoids EADDRINUSE in local dev.
   process.env.PORT = 5050;
 }
 
@@ -44,13 +37,13 @@ console.log(` MONGODB_URI: ${process.env.MONGODB_URI}`);
 console.log(` NODE_ENV: ${process.env.NODE_ENV}`);
 console.log(`PORT: ${process.env.PORT}`);
 
-// Now import other modules
 import express from 'express';
 import http from 'http';
 import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
@@ -58,7 +51,6 @@ import { connectDB } from './utils/database.js';
 import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { initializeSocket } from './io/socketManager.js';
 
-// Routes
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -70,9 +62,25 @@ import { apiLimiter } from './middleware/rateLimiter.js';
 const app = express();
 const PORT = Number(process.env.PORT) || 5050;
 
-// ============= MIDDLEWARE =============
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        mediaSrc: ["'self'", 'blob:', 'data:'],
+        imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
+        connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*', 'https://'],
+        frameSrc: ["'self'"],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      },
+    },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: false,
+  })
+);
 
-// Request logging
 app.use(morgan('combined'));
 
 const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:3000')
@@ -96,17 +104,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount webhook routes BEFORE express.json() so Stripe can get the raw body
 app.use('/api/v1/webhooks', webhookRoutes);
 
-// Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Data sanitization against NoSQL injection
 app.use(mongoSanitize());
-
-// ============= SWAGGER SETUP =============
 
 const swaggerOptions = {
   definition: {
@@ -147,9 +150,6 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ============= ROUTES =============
-
-// Health check (public)
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -158,34 +158,26 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes
-app.use('/api', apiLimiter); // Apply rate limiter to all API routes
+app.use('/api', apiLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/videos', videoRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 
-// ============= ERROR HANDLING =============
-
-// 404 handler
 app.use(notFoundHandler);
 
-// Global error handler
 app.use(globalErrorHandler);
-
-// ============= SERVER STARTUP =============
 
 const startServer = async () => {
   try {
-    // Connect to MongoDB
     await connectDB();
 
-    // Initialize Socket.IO
+    const httpServer = http.createServer(app);
+
     initializeSocket(httpServer);
 
-    // Start listening
-    const server = app.listen(PORT, () => {
+    const server = httpServer.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════╗
 ║   ClipSphere Backend Server Started    ║
@@ -220,7 +212,6 @@ const startServer = async () => {
   }
 };
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled Rejection:', err);
   process.exit(1);

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { User } from '../db_core/models/User.js';
 import { Transaction } from '../db_core/models/Transaction.js';
 import { AppError } from '../utils/appError.js';
+import { emitNewTip } from '../io/socketManager.js';
 
 let stripe;
 
@@ -25,10 +26,6 @@ function paymentIntentIdFromSession(session) {
   return typeof pi === 'string' ? pi : pi.id;
 }
 
-/**
- * Derive amount in cents when session.amount_total is missing (Stripe edge cases).
- * See https://docs.stripe.com/payments/checkout/fulfillment#webhooks — retrieve expands payment_intent.
- */
 async function amountTotalOrFromIntent(stripe, session) {
   if (session.amount_total != null && !Number.isNaN(Number(session.amount_total))) {
     return Number(session.amount_total);
@@ -45,11 +42,7 @@ async function amountTotalOrFromIntent(stripe, session) {
 }
 
 export class PaymentService {
-  /**
-   * Stripe fulfillment docs: webhook receives an event identifier — retrieve the full Checkout Session,
-   * then check payment_status before fulfilling (https://docs.stripe.com/payments/checkout/fulfillment).
-   * Also handles checkout.session.async_payment_succeeded for delayed payment methods.
-   */
+  
   static async fulfillCheckoutFromStripeEvent(eventType, sessionIdFromEvent) {
     if (
       eventType !== 'checkout.session.completed' &&
@@ -67,7 +60,6 @@ export class PaymentService {
       expand: ['payment_intent'],
     });
 
-    /** Only credit wallet when Stripe reports a paid session (immediate card payments are usually `paid`). */
     if (session.payment_status !== 'paid') {
       return {
         ok: true,
@@ -80,10 +72,6 @@ export class PaymentService {
     return PaymentService.completeTipFromRetrievedPaidSession(session);
   }
 
-  /**
-   * After `checkout.sessions.retrieve` with expanded payment intent, when payment_status === `paid`.
-   * Resolves amount_total from PI if needed (per Stripe fulfillment guidance).
-   */
   static async completeTipFromRetrievedPaidSession(session) {
     const stripe = getStripe();
     const amount = await amountTotalOrFromIntent(stripe, session);
@@ -102,10 +90,6 @@ export class PaymentService {
     return PaymentService.completeTipFromCheckoutSession(ledgerSession);
   }
 
-  /**
-   * Applies wallet + ledger update for a paid Checkout Session (webhook + manual sync).
-   * Idempotent: completes at most once per pending row keyed by checkout session id.
-   */
   static async completeTipFromCheckoutSession(session) {
     const creatorIdStr = session.metadata?.creatorId;
     if (!creatorIdStr || !mongoose.Types.ObjectId.isValid(creatorIdStr)) {
@@ -128,7 +112,7 @@ export class PaymentService {
       { stripePaymentId: session.id, status: 'pending' },
       { $set: setFields },
       { new: true }
-    );
+    ).populate('sender', 'username').populate('video', 'title');
 
     if (updated) {
       await User.findByIdAndUpdate(creatorOid, {
@@ -141,6 +125,14 @@ export class PaymentService {
           amount,
         });
       }
+
+      emitNewTip(creatorOid, {
+        tipperId: updated.sender?._id || session.metadata?.senderId,
+        tipperUsername: updated.sender?.username || 'Anonymous',
+        amount: amount / 100,
+        videoId: updated.video?._id || session.metadata?.videoId,
+        videoTitle: updated.video?.title || 'Unknown Video',
+      });
 
       return { ok: true, applied: true };
     }
@@ -160,9 +152,6 @@ export class PaymentService {
     return { ok: false, reason: 'no_pending_row', sessionStripeId: session.id };
   }
 
-  /**
-   * After redirect from Stripe Checkout: confirm payment server-side when webhooks fail in dev.
-   */
   static async syncCheckoutSessionForUser(sessionId, userId) {
     const stripe = getStripe();
 

@@ -40,10 +40,6 @@ export const protect = async (req, res, next) => {
   }
 };
 
-/**
- * Sets req.user when a valid JWT is present; otherwise continues without error.
- * Used for media routes where public content must work without a cookie.
- */
 export const optionalAuth = async (req, res, next) => {
   let token;
 

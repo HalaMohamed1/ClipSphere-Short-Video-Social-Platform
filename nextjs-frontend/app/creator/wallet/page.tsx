@@ -22,7 +22,7 @@ interface LedgerTx {
   _id: string;
   amount: number;
   status: string;
-  /** Checkout Session id (cs_test_…) while pending; replaced with pi_ after completion */
+  
   stripePaymentId?: string;
   sender?: TxUser;
   recipient?: TxUser;
@@ -44,12 +44,12 @@ export default function CreatorWalletPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  /** After Stripe redirects with ?session_id= */
+  
   const [stripeReturnBanner, setStripeReturnBanner] = useState<
     null | 'confirming' | { tone: 'ok'; text: string } | { tone: 'err'; text: string }
   >(null);
   const syncRanRef = useRef(false);
-  /** Stores Stripe Checkout Session id (cs_…) while finalize request runs */
+  
   const [finalizeBusySessionId, setFinalizeBusySessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -126,7 +126,6 @@ export default function CreatorWalletPage() {
     }
   }, [user, authLoading, page, load]);
 
-  /** Finalize ledger when Stripe redirects back — covers local dev when webhook is misconfigured or rate-limited. */
   useEffect(() => {
     if (authLoading || !user) return;
     const sid =

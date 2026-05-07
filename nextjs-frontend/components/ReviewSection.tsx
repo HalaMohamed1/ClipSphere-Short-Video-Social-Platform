@@ -5,6 +5,7 @@ import StarRating from "./StarRating";
 import ReviewCard from "./ReviewCard";
 import { useAuth } from "../hooks/useAuth";
 import { apiCall } from "../lib/api";
+import { onNewReview, onNewComment } from "../lib/socket";
 
 interface Review {
   _id: string;
@@ -66,6 +67,62 @@ export default function ReviewSection({
 
     fetchReviews();
   }, [videoId]);
+
+  // Listen for real-time review events
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribeReview = onNewReview((data) => {
+      // If this is a review on the current video
+      if (data.videoId === videoId) {
+        console.log(`[ReviewSection] Real-time review received: ${data.reviewerUsername} reviewed "${data.videoTitle}"`);
+        // Refresh the reviews list to get the latest data
+        const refreshReviews = async () => {
+          try {
+            const updatedData = await apiCall<{
+              reviews: Review[];
+              stats: ReviewStats;
+            }>(`/videos/${videoId}/reviews`, {
+              method: "GET",
+            });
+            setReviews(updatedData?.reviews || []);
+            setStats(updatedData?.stats || { averageRating: 0, totalReviews: 0 });
+          } catch (error) {
+            console.error("Error refreshing reviews:", error);
+          }
+        };
+        refreshReviews();
+      }
+    });
+
+    const unsubscribeComment = onNewComment((data) => {
+      // If this is a comment on the current video
+      if (data.videoId === videoId) {
+        console.log(`[ReviewSection] Real-time comment received: ${data.commenterUsername} commented on "${data.videoTitle}"`);
+        // Refresh the reviews list to include the new comment
+        const refreshReviews = async () => {
+          try {
+            const updatedData = await apiCall<{
+              reviews: Review[];
+              stats: ReviewStats;
+            }>(`/videos/${videoId}/reviews`, {
+              method: "GET",
+            });
+            setReviews(updatedData?.reviews || []);
+            setStats(updatedData?.stats || { averageRating: 0, totalReviews: 0 });
+          } catch (error) {
+            console.error("Error refreshing reviews:", error);
+          }
+        };
+        refreshReviews();
+      }
+    });
+
+    return () => {
+      unsubscribeReview();
+      unsubscribeComment();
+    };
+  }, [user, videoId]);
 
   useEffect(() => {
     if (!user) return;

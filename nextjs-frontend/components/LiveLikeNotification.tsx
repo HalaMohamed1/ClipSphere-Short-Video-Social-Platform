@@ -159,12 +159,12 @@ function NotificationBubble({ notification }: NotificationBubbleProps) {
       } pointer-events-auto`}
     >
       <div className="relative overflow-hidden rounded-xl shadow-2xl border border-zinc-700/50 backdrop-blur-sm bg-gradient-to-r from-zinc-900 to-zinc-800">
-        {/* Animated gradient border effect */}
+        {}
         <div className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 opacity-0 hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Main content */}
+        {}
         <div className="relative p-4 flex items-center gap-4">
-          {/* Icon with pulse effect */}
+          {}
           <div className="flex-shrink-0">
             {isLike ? (
               <div className="relative w-10 h-10 flex items-center justify-center animate-pulse-heart">
@@ -196,7 +196,7 @@ function NotificationBubble({ notification }: NotificationBubbleProps) {
             )}
           </div>
 
-          {/* Text content */}
+          {}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-zinc-100">
               <span className="text-white font-bold">{notification.liker}</span>
@@ -211,7 +211,7 @@ function NotificationBubble({ notification }: NotificationBubbleProps) {
             </p>
           </div>
 
-          {/* Close button */}
+          {}
           <button
             onClick={handleClose}
             className="flex-shrink-0 ml-2 text-zinc-500 hover:text-zinc-300 transition-colors p-1 hover:bg-zinc-700/30 rounded"
@@ -233,7 +233,7 @@ function NotificationBubble({ notification }: NotificationBubbleProps) {
           </button>
         </div>
 
-        {/* Progress bar */}
+        {}
         <div className="h-1 bg-zinc-700/30">
           <div
             className={`h-full ${

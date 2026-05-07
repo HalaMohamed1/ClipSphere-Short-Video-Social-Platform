@@ -25,7 +25,6 @@ function isVideoOwner(
   );
 }
 
-/** SWAPD352: edit metadata = owner only; delete = owner or admin */
 function canEditVideo(
   user: { _id: string; role?: string } | null | undefined,
   video: Video | null

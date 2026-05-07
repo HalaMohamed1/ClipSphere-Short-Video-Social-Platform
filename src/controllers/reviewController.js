@@ -3,6 +3,9 @@ import { AppError } from '../utils/appError.js';
 import { ReviewService } from '../services/reviewService.js';
 import { createReviewSchema, updateReviewSchema } from '../validators/reviewValidator.js';
 import { paginationSchema } from '../validators/commonValidator.js';
+import { emitNewReview } from '../io/socketManager.js';
+import { Video } from '../db_core/models/Video.js';
+import { User } from '../db_core/models/User.js';
 
 export class ReviewController {
   static createReview = catchAsync(async (req, res) => {
@@ -15,6 +18,21 @@ export class ReviewController {
     };
 
     const review = await ReviewService.createReview(reviewData);
+
+    // Emit socket event for new review
+    const video = await Video.findById(req.params.videoId).populate('user', '_id');
+    const reviewer = await User.findById(req.user._id).select('username');
+
+    if (video && video.user) {
+      emitNewReview(video.user._id, {
+        reviewerId: req.user._id,
+        reviewerUsername: reviewer?.username || 'Anonymous',
+        rating: validatedData.rating,
+        comment: validatedData.comment,
+        videoId: req.params.videoId,
+        videoTitle: video.title,
+      });
+    }
 
     res.status(201).json({
       status: 'success',

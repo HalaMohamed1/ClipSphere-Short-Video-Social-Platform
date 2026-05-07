@@ -4,9 +4,7 @@ import { registerSchema, loginSchema, updateUserSchema, updatePreferencesSchema 
 import { getAuthCookieOptions } from '../utils/authCookie.js';
 
 export class AuthController {
-  // Register user
   static register = catchAsync(async (req, res) => {
-    // Validate input with Zod
     const validatedData = registerSchema.parse(req.body);
 
     const { user, token } = await AuthService.register(validatedData);
@@ -23,9 +21,7 @@ export class AuthController {
     });
   });
 
-  // Login user
   static login = catchAsync(async (req, res) => {
-    // Validate input with Zod
     const validatedData = loginSchema.parse(req.body);
 
     const { user, token } = await AuthService.login(validatedData);
@@ -50,7 +46,6 @@ export class AuthController {
     });
   });
 
-  // Get current user profile
   static getMe = catchAsync(async (req, res) => {
     const user = req.user;
 
@@ -60,9 +55,7 @@ export class AuthController {
     });
   });
 
-  // Update current user profile
   static updateMe = catchAsync(async (req, res) => {
-    // Validate input with Zod
     const validatedData = updateUserSchema.parse(req.body);
 
     const user = await AuthService.updateProfile(req.user.id, validatedData);
@@ -74,7 +67,6 @@ export class AuthController {
     });
   });
 
-  // Get user by ID (public profile)
   static getUserProfile = catchAsync(async (req, res) => {
     const user = await AuthService.getUserProfile(req.params.id);
 
@@ -84,9 +76,7 @@ export class AuthController {
     });
   });
 
-  // Update notification preferences
   static updatePreferences = catchAsync(async (req, res) => {
-    // Validate input with Zod
     const validatedData = updatePreferencesSchema.parse(req.body);
 
     const user = await AuthService.updatePreferences(req.user.id, validatedData);

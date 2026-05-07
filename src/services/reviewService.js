@@ -3,6 +3,7 @@ import { Video } from '../db_core/models/Video.js';
 import { User } from '../db_core/models/User.js';
 import { AppError } from '../utils/appError.js';
 import { sendEngagementNotification } from '../utils/engagementNotificationUtil.js';
+import { emitNewReview } from '../io/socketManager.js';
 
 export class ReviewService {
   static async createReview(reviewData) {
@@ -26,7 +27,6 @@ export class ReviewService {
       { path: 'video', select: 'title user' },
     ]);
 
-    // Send engagement notification to video owner
     if (video.user && video.user.toString() !== reviewData.user.toString()) {
       const reviewer = await User.findById(reviewData.user).select('username');
       await sendEngagementNotification(
@@ -36,6 +36,15 @@ export class ReviewService {
         video.title,
         reviewData.video.toString()
       );
+
+      emitNewReview(video.user, {
+        reviewerId: reviewData.user,
+        reviewerUsername: reviewer?.username || 'Anonymous',
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+        videoId: reviewData.video.toString(),
+        videoTitle: video.title,
+      });
     }
 
     return populatedReview;
