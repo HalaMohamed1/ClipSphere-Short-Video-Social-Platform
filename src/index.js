@@ -26,11 +26,15 @@ if (!process.env.MONGODB_URI) {
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
-if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = 'your_super_secret_jwt_key_change_this_in_production';
-}
 if (!process.env.PORT) {
   process.env.PORT = 5050;
+}
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: JWT_SECRET environment variable must be set in production');
+  }
+  console.warn('⚠️  JWT_SECRET not set, using development placeholder (DO NOT USE IN PRODUCTION)');
+  process.env.JWT_SECRET = 'dev-only-key-change-in-production';
 }
 
 console.log(` MONGODB_URI: ${process.env.MONGODB_URI}`);
@@ -68,7 +72,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         mediaSrc: ["'self'", 'blob:', 'data:'],
         imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
         connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*', 'https://'],
@@ -173,7 +177,6 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    // Initialize Redis and BullMQ
     console.log('📦 Initializing Redis and Queue infrastructure...');
     const { getRedisClient } = await import('./utils/redisClient.js');
     const { createEmailQueue } = await import('./queues/emailQueue.js');
@@ -185,7 +188,6 @@ const startServer = async () => {
       const emailQueue = await createEmailQueue();
       console.log('✓ Email queue initialized');
       
-      // Attach queues to app for later access
       app.locals.emailQueue = emailQueue;
     } catch (err) {
       console.warn('⚠️  Redis/Queue initialization failed (optional):', err.message);

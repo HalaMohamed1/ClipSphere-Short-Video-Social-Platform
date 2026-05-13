@@ -1,17 +1,11 @@
 import { getRedisClient } from './redisClient.js';
 
-const DEFAULT_TTL = 300; // 5 minutes in seconds
+const DEFAULT_TTL = 300;
 
-/**
- * Generate a cache key for a given prefix and parameters
- */
 export function generateCacheKey(prefix, ...params) {
   return `${prefix}:${params.join(':')}`;
 }
 
-/**
- * Get a cached value from Redis
- */
 export async function getCachedValue(key) {
   try {
     const client = await getRedisClient();
@@ -23,9 +17,6 @@ export async function getCachedValue(key) {
   }
 }
 
-/**
- * Set a cached value in Redis with TTL
- */
 export async function setCachedValue(key, value, ttl = DEFAULT_TTL) {
   try {
     const client = await getRedisClient();
@@ -35,9 +26,6 @@ export async function setCachedValue(key, value, ttl = DEFAULT_TTL) {
   }
 }
 
-/**
- * Delete a cached value from Redis
- */
 export async function deleteCachedValue(key) {
   try {
     const client = await getRedisClient();
@@ -47,9 +35,6 @@ export async function deleteCachedValue(key) {
   }
 }
 
-/**
- * Delete all keys matching a pattern from Redis
- */
 export async function deletePatternKeys(pattern) {
   try {
     const client = await getRedisClient();
@@ -62,9 +47,6 @@ export async function deletePatternKeys(pattern) {
   }
 }
 
-/**
- * Increment a numeric value in Redis
- */
 export async function incrementCachedValue(key, amount = 1) {
   try {
     const client = await getRedisClient();
@@ -75,9 +57,7 @@ export async function incrementCachedValue(key, amount = 1) {
   }
 }
 
-/**
- * Decrement a numeric value in Redis
- */
+
 export async function decrementCachedValue(key, amount = 1) {
   try {
     const client = await getRedisClient();

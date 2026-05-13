@@ -2,7 +2,6 @@ import { Queue, Worker } from 'bullmq';
 import { getRedisClient } from '../utils/redisClient.js';
 import { sendEmail } from '../services/emailService.js';
 
-// Email Queue definition
 export async function createEmailQueue() {
   const connection = await getRedisClient();
 
@@ -15,15 +14,14 @@ export async function createEmailQueue() {
         delay: 2000,
       },
       removeOnComplete: {
-        age: 3600, // Keep completed jobs for 1 hour
+        age: 3600,
       },
       removeOnFail: {
-        age: 86400, // Keep failed jobs for 24 hours
+        age: 86400,
       },
     },
   });
 
-  // Log queue events
   emailQueue.on('completed', (job) => {
     console.log(`✓ Email job ${job.id} completed`);
   });
@@ -39,14 +37,6 @@ export async function createEmailQueue() {
   return emailQueue;
 }
 
-/**
- * Add an email job to the queue
- * @param {Object} data - Email data
- * @param {string} data.to - Recipient email
- * @param {string} data.subject - Email subject
- * @param {string} data.html - Email HTML content
- * @param {Object} options - BullMQ options
- */
 export async function addEmailJob(data, options = {}) {
   try {
     const emailQueue = await createEmailQueue();
@@ -62,10 +52,6 @@ export async function addEmailJob(data, options = {}) {
   }
 }
 
-/**
- * Create email worker for processing jobs
- * This should be called in the worker process
- */
 export async function createEmailWorker() {
   const connection = await getRedisClient();
 
@@ -75,7 +61,6 @@ export async function createEmailWorker() {
       const { to, subject, html } = job.data;
 
       try {
-        // Send email using the email service
         await sendEmail(to, subject, html);
         console.log(`✓ Email sent to: ${to}`);
         return { success: true, recipient: to };

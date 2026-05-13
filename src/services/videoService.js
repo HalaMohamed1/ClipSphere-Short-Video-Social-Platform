@@ -174,7 +174,6 @@ export class VideoService {
     const query = { status: 'public' };
 
     if (filters.userId) {
-      // Use mongoose ObjectId for user filtering
       query.user = filters.userId;
     }
 
@@ -221,13 +220,12 @@ export class VideoService {
   }
 
   static async _getTrendingFeed({ query, skip, limit, page }) {
-    // Import Redis cache utilities
     const { getCachedValue, setCachedValue, deletePatternKeys } = await import('../utils/redisCache.js');
 
-    // Generate cache key
     const cacheKey = `trending:feed:${limit}:${skip}`;
 
     // Try to get from cache first
+    try {
     try {
       const cachedResult = await getCachedValue(cacheKey);
       if (cachedResult) {
@@ -238,9 +236,6 @@ export class VideoService {
       console.warn('Cache retrieval error, proceeding with DB query:', err.message);
     }
 
-    // If not in cache, execute the aggregation pipeline
-    const pipeline = [
-      { $match: query },
       {
         $lookup: {
           from: 'reviews',
@@ -305,7 +300,6 @@ export class VideoService {
 
     // Cache the result for 5 minutes (300 seconds)
     try {
-      await setCachedValue(cacheKey, result, 300);
       console.log(`💾 Cached trending feed for ${limit} videos at offset ${skip}`);
     } catch (err) {
       console.warn('Cache set error, but returning result:', err.message);
