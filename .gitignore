@@ -17,6 +17,13 @@ build/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.*.production
+
+# SSL/TLS certificates & keys (generate locally, never commit)
+nginx/ssl/*.key
+nginx/ssl/*.crt
+nginx/ssl/*.pem
 
 # Logs & debug
 *.log

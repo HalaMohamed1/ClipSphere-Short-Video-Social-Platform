@@ -26,11 +26,15 @@ if (!process.env.MONGODB_URI) {
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'development';
 }
-if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = 'your_super_secret_jwt_key_change_this_in_production';
-}
 if (!process.env.PORT) {
   process.env.PORT = 5050;
+}
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL: JWT_SECRET environment variable must be set in production');
+  }
+  console.warn('⚠️  JWT_SECRET not set, using development placeholder (DO NOT USE IN PRODUCTION)');
+  process.env.JWT_SECRET = 'dev-only-key-change-in-production';
 }
 
 console.log(` MONGODB_URI: ${process.env.MONGODB_URI}`);
@@ -68,7 +72,7 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         mediaSrc: ["'self'", 'blob:', 'data:'],
         imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
         connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*', 'https://'],
@@ -111,44 +115,49 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(mongoSanitize());
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'ClipSphere API',
-      version: '1.0.0',
-      description: 'ClipSphere - Short Video Social Platform API Documentation',
-      contact: {
-        name: 'ClipSphere Team',
-      },
-    },
-    servers: [
-      {
-        url: process.env.SERVER_URL || 'http://localhost:5050',
-        description: 'Development Server',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'JWT Authorization header. Format: Bearer <token>',
+let swaggerSpec = {};
+try {
+  const swaggerOptions = {
+    definition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'ClipSphere API',
+        version: '1.0.0',
+        description: 'ClipSphere - Short Video Social Platform API Documentation',
+        contact: {
+          name: 'ClipSphere Team',
         },
       },
-    },
-    security: [
-      {
-        bearerAuth: [],
+      servers: [
+        {
+          url: process.env.SERVER_URL || 'http://localhost:5050',
+          description: 'Development Server',
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: 'JWT Authorization header. Format: Bearer <token>',
+          },
+        },
       },
-    ],
-  },
-  apis: ['./src/docs/openapi/*.swagger.js'],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+    },
+    apis: [],
+  };
+  swaggerSpec = swaggerJsdoc(swaggerOptions);
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log('✓ Swagger documentation loaded');
+} catch (err) {
+  console.warn('⚠️  Swagger initialization failed (optional):', err.message);
+}
 
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -172,6 +181,24 @@ app.use(globalErrorHandler);
 const startServer = async () => {
   try {
     await connectDB();
+
+    console.log('📦 Initializing Redis and Queue infrastructure...');
+    const { getRedisClient } = await import('./utils/redisClient.js');
+    const { createEmailQueue } = await import('./queues/emailQueue.js');
+    
+    try {
+      await getRedisClient();
+      console.log('✓ Redis client connected');
+      
+      const emailQueue = await createEmailQueue();
+      console.log('✓ Email queue initialized');
+      
+      app.locals.emailQueue = emailQueue;
+    } catch (err) {
+      console.warn('⚠️  Redis/Queue initialization failed (optional):', err.message);
+      console.log('   The server will continue without queue functionality.');
+      console.log('   Make sure Redis is running: docker compose up -d cache');
+    }
 
     const httpServer = http.createServer(app);
 

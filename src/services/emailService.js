@@ -179,3 +179,47 @@ export class EmailService {
     }
   }
 }
+
+/**
+ * Send email via BullMQ queue (async, non-blocking)
+ * Use this in API endpoints to queue emails without waiting
+ */
+export async function sendEmailQueued(to, subject, html) {
+  try {
+    const { addEmailJob } = await import('../queues/emailQueue.js');
+    return await addEmailJob({ to, subject, html });
+  } catch (error) {
+    console.error('Error queuing email:', error);
+    throw error;
+  }
+}
+
+/**
+ * Send email directly (blocking, used by worker)
+ * Use this in worker process only
+ */
+export async function sendEmail(to, subject, html) {
+  try {
+    const transporter = await EmailService.initializeTransporter();
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || 'noreply@clipsphere.app',
+      to,
+      subject,
+      html,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✓ Email sent to ${to}. Message ID: ${info.messageId}`);
+
+    // Log test email preview URL if using Ethereal
+    if (process.env.NODE_ENV === 'development' && !process.env.EMAIL_SERVICE) {
+      console.log(`📧 Test email preview: ${nodemailer.getTestMessageUrl(info)}`);
+    }
+
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`✗ Error sending email to ${to}:`, error);
+    throw error;
+  }
+}

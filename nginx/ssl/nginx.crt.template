@@ -1,0 +1,7 @@
+# ⚠️  IMPORTANT: This file should NOT be committed to version control!
+# Generate self-signed certificate locally during development:
+# openssl req -x509 -newkey rsa:2048 -keyout nginx.key -out nginx.crt -days 365 -nodes
+#
+# For production: Use a proper CA-signed certificate from Let's Encrypt or similar
+#
+# This placeholder prevents accidental exposure of real certificates.

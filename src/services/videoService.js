@@ -221,6 +221,21 @@ export class VideoService {
   }
 
   static async _getTrendingFeed({ query, skip, limit, page }) {
+    const { getCachedValue, setCachedValue, deletePatternKeys } = await import('../utils/redisCache.js');
+
+    const cacheKey = `trending:feed:${limit}:${skip}`;
+
+    // Try to get from cache first
+    try {
+      const cachedResult = await getCachedValue(cacheKey);
+      if (cachedResult) {
+        console.log(`📦 Cache HIT for ${cacheKey}`);
+        return cachedResult;
+      }
+    } catch (err) {
+      console.warn('Cache retrieval error, proceeding with DB query:', err.message);
+    }
+
     const pipeline = [
       { $match: query },
       {
@@ -249,11 +264,29 @@ export class VideoService {
       },
       {
         $addFields: {
+          // Bonus: Use correct formula: (Likes x 10) + (Avg_Rating x 2) + Freshness_Bonus
+          daysSinceCreation: {
+            $divide: [
+              { $subtract: [new Date(), '$createdAt'] },
+              1000 * 60 * 60 * 24, // Convert ms to days
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          freshnessBonus: {
+            $max: [0, { $subtract: [5, { $trunc: '$daysSinceCreation' }] }], // Max 5 points, decreases by 1 per day
+          },
+        },
+      },
+      {
+        $addFields: {
           trendScore: {
             $add: [
-              { $multiply: [{ $ifNull: ['$avgRating', 0] }, 4] },
-              { $multiply: [{ $ifNull: ['$likesCount', 0] }, 0.1] },
-              { $multiply: [{ $ifNull: ['$views', 0] }, 0.01] },
+              { $multiply: [{ $ifNull: ['$likesCount', 0] }, 10] },
+              { $multiply: [{ $ifNull: ['$avgRating', 0] }, 2] },
+              '$freshnessBonus',
             ],
           },
         },
@@ -275,7 +308,7 @@ export class VideoService {
 
     const withUrls = attachMediaUrlsMany(populated);
 
-    return {
+    const result = {
       videos: withUrls,
       pagination: {
         total: count,
@@ -284,6 +317,16 @@ export class VideoService {
         pages: Math.ceil(count / limit) || 1,
       },
     };
+
+    // Cache the result for 5 minutes (300 seconds)
+    try {
+      await setCachedValue(cacheKey, result, 300);
+      console.log(`💾 Cached trending feed for ${limit} videos at offset ${skip}`);
+    } catch (err) {
+      console.warn('Cache set error, but returning result:', err.message);
+    }
+
+    return result;
   }
 
   static async getFollowingFeed(userId, filters = {}) {
@@ -314,9 +357,10 @@ export class VideoService {
       query.$text = { $search: fSearch };
     }
 
+    // Bonus: Sort by trendingScore (high-score videos first) then by createdAt for recently created videos
     const videos = await Video.find(query)
       .populate('user', 'username avatarKey bio role')
-      .sort({ createdAt: -1 })
+      .sort({ trendingScore: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -399,7 +443,7 @@ export class VideoService {
   static async incrementLikes(videoId) {
     const video = await Video.findByIdAndUpdate(
       videoId,
-      { $inc: { likesCount: 1 } },
+      { $inc: { likesCount: 1, trendingScore: 10 } },
       { new: true }
     );
 
@@ -409,10 +453,60 @@ export class VideoService {
   static async decrementLikes(videoId) {
     const video = await Video.findByIdAndUpdate(
       videoId,
-      { $inc: { likesCount: -1 } },
+      { $inc: { likesCount: -1, trendingScore: -10 } },
       { new: true }
     );
 
     return video;
+  }
+
+  // Bonus: Calculate and update trendingScore based on average review rating
+  // Formula: trendingScore = (Likes x 10) + (Avg_Rating x 2) + Freshness_Bonus
+  static async updateTrendingScoreFromReviews(videoId) {
+    const { Review } = await import('../db_core/models/Review.js');
+
+    // Calculate average rating for the video
+    const ratingStats = await Review.aggregate([
+      { $match: { video: videoId } },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: '$rating' },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const avgRating = ratingStats[0]?.avgRating || 0;
+    const ratingComponent = Math.round(avgRating * 2 * 10) / 10; // Round to 1 decimal
+
+    // Get current video to calculate freshness bonus
+    const video = await Video.findById(videoId);
+    if (!video) return null;
+
+    // Freshness bonus: decay over time (newer videos get higher bonus)
+    const daysSinceCreation = Math.floor((Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+    const freshnessBonus = Math.max(0, 5 - daysSinceCreation); // Max 5 points, decreases by 1 per day
+
+    // Calculate total trending score: Likes (already updated) + Ratings + Freshness
+    const totalScore = (video.likesCount * 10) + ratingComponent + freshnessBonus;
+
+    // Update the video's trendingScore
+    const updatedVideo = await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $set: {
+          trendingScore: totalScore,
+        },
+      },
+      { new: true }
+    );
+
+    return updatedVideo;
+  }
+
+  // Recalculate entire trendingScore (useful for bulk operations)
+  static async recalculateTrendingScore(videoId) {
+    return this.updateTrendingScoreFromReviews(videoId);
   }
 }
