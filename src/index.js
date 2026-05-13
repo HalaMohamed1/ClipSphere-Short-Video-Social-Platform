@@ -173,6 +173,26 @@ const startServer = async () => {
   try {
     await connectDB();
 
+    // Initialize Redis and BullMQ
+    console.log('📦 Initializing Redis and Queue infrastructure...');
+    const { getRedisClient } = await import('./utils/redisClient.js');
+    const { createEmailQueue } = await import('./queues/emailQueue.js');
+    
+    try {
+      await getRedisClient();
+      console.log('✓ Redis client connected');
+      
+      const emailQueue = await createEmailQueue();
+      console.log('✓ Email queue initialized');
+      
+      // Attach queues to app for later access
+      app.locals.emailQueue = emailQueue;
+    } catch (err) {
+      console.warn('⚠️  Redis/Queue initialization failed (optional):', err.message);
+      console.log('   The server will continue without queue functionality.');
+      console.log('   Make sure Redis is running: docker compose up -d cache');
+    }
+
     const httpServer = http.createServer(app);
 
     initializeSocket(httpServer);

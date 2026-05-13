@@ -20,7 +20,6 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Validate input with Zod
       const validatedData = registerSchema.parse({ username, email, password });
 
       const res = await fetch(`${API_BASE}/auth/register`, {
@@ -42,14 +41,12 @@ export default function RegisterPage() {
         console.log('✅ Token stored in localStorage');
       }
       
-      // Add small delay to ensure cookie is fully written before navigation
       setTimeout(() => {
         window.location.href = "/";
       }, 200);
     } catch (err: unknown) {
       console.error('Registration error:', err);
       if (err instanceof Error) {
-        // Check if it's a Zod validation error
         if (err.message.includes('[') && err.message.includes(']')) {
           try {
             const zodError = JSON.parse(err.message);
