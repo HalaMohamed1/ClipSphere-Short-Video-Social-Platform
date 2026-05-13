@@ -1,4 +1,4 @@
-﻿# ⚠️  IMPORTANT: This file should NOT be committed to version control!
+# ⚠️  IMPORTANT: This file should NOT be committed to version control!
 # Generate self-signed certificate locally during development:
 # openssl req -x509 -newkey rsa:2048 -keyout nginx.key -out nginx.crt -days 365 -nodes
 #
