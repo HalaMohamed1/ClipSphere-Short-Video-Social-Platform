@@ -2,7 +2,26 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 
 let io = null;
-const userSockets = new Map(); // Track which socket belongs to which user
+const userSockets = new Map();
+// Offline notification queue: userId (string) -> [{event, payload}]
+// Flushed to the socket when the user joins their room. Capped at 100 per user.
+const pendingNotifications = new Map();
+
+const QUEUE_CAP = 100;
+
+function queueOrEmit(userIdStr, event, payload) {
+  const room = `user_${userIdStr}`;
+  const occupied = io?.sockets.adapter.rooms.get(room)?.size > 0;
+
+  if (occupied) {
+    io.to(room).emit(event, payload);
+  } else {
+    const queue = pendingNotifications.get(userIdStr) ?? [];
+    queue.push({ event, payload });
+    if (queue.length > QUEUE_CAP) queue.shift();
+    pendingNotifications.set(userIdStr, queue);
+  }
+}
 
 const verifySocketToken = (socket, next) => {
   const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
@@ -62,6 +81,14 @@ export const initializeSocket = (httpServer) => {
         socket.join(`user_${userId}`);
         userSockets.set(userId, socket.id);
         socket.emit('user:joined', { success: true, room: `user_${userId}` });
+
+        // Flush any notifications that arrived while the user was offline
+        const queued = pendingNotifications.get(userId);
+        if (queued?.length) {
+          console.log(`[Socket.IO] Flushing ${queued.length} queued notification(s) to user ${userId}`);
+          queued.forEach(({ event, payload }) => socket.emit(event, payload));
+          pendingNotifications.delete(userId);
+        }
       } else {
         console.warn(`[Socket.IO] Unauthorized room join attempt: ${socket.id} tried to join ${userId}`);
         socket.emit('error', { message: 'Unauthorized' });
@@ -101,15 +128,9 @@ export const getIO = () => {
 };
 
 export const emitNewLike = (videoOwnerId, likeData) => {
-  const io = getIO();
-  const roomName = `user_${videoOwnerId}`;
-  
-  console.log(`[Socket.IO] Emitting new-like to room: ${roomName}`, {
-    liker: likeData.liker,
-    videoTitle: likeData.videoTitle,
-  });
-
-  io.to(roomName).emit('new-like', {
+  getIO();
+  const uid = String(videoOwnerId);
+  queueOrEmit(uid, 'new-like', {
     event: 'new-like',
     data: {
       likerId: likeData.likerId,
@@ -122,15 +143,9 @@ export const emitNewLike = (videoOwnerId, likeData) => {
 };
 
 export const emitUnlike = (videoOwnerId, unlikeData) => {
-  const io = getIO();
-  const roomName = `user_${videoOwnerId}`;
-
-  console.log(`[Socket.IO] Emitting unlike to room: ${roomName}`, {
-    liker: unlikeData.liker,
-    videoTitle: unlikeData.videoTitle,
-  });
-
-  io.to(roomName).emit('unlike', {
+  getIO();
+  const uid = String(videoOwnerId);
+  queueOrEmit(uid, 'unlike', {
     event: 'unlike',
     data: {
       likerId: unlikeData.likerId,
@@ -143,14 +158,9 @@ export const emitUnlike = (videoOwnerId, unlikeData) => {
 };
 
 export const emitNewFollower = (followedUserId, followerData) => {
-  const io = getIO();
-  const roomName = `user_${followedUserId}`;
-
-  console.log(`[Socket.IO] Emitting new-follower to room: ${roomName}`, {
-    follower: followerData.followerUsername,
-  });
-
-  io.to(roomName).emit('new-follower', {
+  getIO();
+  const uid = String(followedUserId);
+  queueOrEmit(uid, 'new-follower', {
     event: 'new-follower',
     data: {
       followerId: followerData.followerId,
@@ -161,15 +171,9 @@ export const emitNewFollower = (followedUserId, followerData) => {
 };
 
 export const emitNewReview = (videoOwnerId, reviewData) => {
-  const io = getIO();
-  const roomName = `user_${videoOwnerId}`;
-
-  console.log(`[Socket.IO] Emitting new-review to room: ${roomName}`, {
-    reviewer: reviewData.reviewerUsername,
-    videoTitle: reviewData.videoTitle,
-  });
-
-  io.to(roomName).emit('new-review', {
+  getIO();
+  const uid = String(videoOwnerId);
+  queueOrEmit(uid, 'new-review', {
     event: 'new-review',
     data: {
       reviewerId: reviewData.reviewerId,
@@ -184,15 +188,9 @@ export const emitNewReview = (videoOwnerId, reviewData) => {
 };
 
 export const emitNewComment = (videoOwnerId, commentData) => {
-  const io = getIO();
-  const roomName = `user_${videoOwnerId}`;
-
-  console.log(`[Socket.IO] Emitting new-comment to room: ${roomName}`, {
-    commenter: commentData.commenterUsername,
-    videoTitle: commentData.videoTitle,
-  });
-
-  io.to(roomName).emit('new-comment', {
+  getIO();
+  const uid = String(videoOwnerId);
+  queueOrEmit(uid, 'new-comment', {
     event: 'new-comment',
     data: {
       commenterId: commentData.commenterId,
@@ -206,15 +204,9 @@ export const emitNewComment = (videoOwnerId, commentData) => {
 };
 
 export const emitNewTip = (creatorId, tipData) => {
-  const io = getIO();
-  const roomName = `user_${creatorId}`;
-
-  console.log(`[Socket.IO] Emitting new-tip to room: ${roomName}`, {
-    tipper: tipData.tipperUsername,
-    amount: tipData.amount,
-  });
-
-  io.to(roomName).emit('new-tip', {
+  getIO();
+  const uid = String(creatorId);
+  queueOrEmit(uid, 'new-tip', {
     event: 'new-tip',
     data: {
       tipperId: tipData.tipperId,

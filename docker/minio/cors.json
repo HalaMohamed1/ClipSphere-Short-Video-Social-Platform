@@ -1,6 +1,12 @@
 [
   {
-    "AllowedOrigins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+    "AllowedOrigins": [
+      "http://localhost",
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://nginx",
+      "http://frontend:3000"
+    ],
     "AllowedMethods": ["GET", "PUT", "POST", "HEAD", "DELETE"],
     "AllowedHeaders": ["*"],
     "ExposeHeaders": ["ETag", "Content-Length"],

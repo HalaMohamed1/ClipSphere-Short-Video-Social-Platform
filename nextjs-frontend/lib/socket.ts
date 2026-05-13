@@ -44,27 +44,36 @@ const createEventHandler = (eventName: string) => {
 };
 
 const getAuthToken = (): string | null => {
-  // Try to get token from cookies (HttpOnly cookie set by backend)
+  // Login stores the token in localStorage (httpOnly cookie is not readable by JS)
+  if (typeof window !== 'undefined') {
+    const lsToken = window.localStorage.getItem('jwtToken');
+    if (lsToken) return lsToken;
+  }
+  // Fallback: non-httpOnly cookie (dev / older sessions)
   if (typeof document !== 'undefined') {
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
+    for (const cookie of document.cookie.split(';')) {
       const [name, value] = cookie.split('=');
-      if (name.trim() === 'token') {
-        return decodeURIComponent(value);
-      }
+      if (name.trim() === 'token') return decodeURIComponent(value);
     }
   }
   return null;
 };
 
 export const initializeSocket = (): Socket => {
+  const token = getAuthToken();
+  // Reuse only if already connected WITH auth; otherwise reconnect so userId gets set
   if (socket && socket.connected) {
-    console.log('[Socket.IO] Already connected, reusing socket');
-    return socket;
+    if (token && !(socket as any)._authed) {
+      socket.disconnect();
+      socket = null;
+    } else {
+      return socket;
+    }
   }
 
-  const socketUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-  const token = getAuthToken();
+  // Socket.IO needs the origin only — strip /api/v1 path so it doesn't become a namespace
+  const socketUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5050')
+    .replace(/\/api(\/v\d+.*)?$/, '');
 
   console.log(`[Socket.IO] Connecting to ${socketUrl} with auth token: ${token ? 'present' : 'missing'}`);
 
@@ -82,8 +91,8 @@ export const initializeSocket = (): Socket => {
       : undefined,
   });
 
-  // Connection events
   socket.on('connect', () => {
+    if (token) (socket as any)._authed = true;
     console.log('[Socket.IO] Connected to server:', socket?.id);
   });
 

@@ -1,0 +1,17 @@
+node_modules
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+*.log
+*.lock
+npm-debug.log*
+.DS_Store
+nextjs-frontend
+docker
+nginx
+*.pdf
+*.bat
+*.sh
+mongod.lock
