@@ -221,6 +221,24 @@ export class VideoService {
   }
 
   static async _getTrendingFeed({ query, skip, limit, page }) {
+    // Import Redis cache utilities
+    const { getCachedValue, setCachedValue, deletePatternKeys } = await import('../utils/redisCache.js');
+
+    // Generate cache key
+    const cacheKey = `trending:feed:${limit}:${skip}`;
+
+    // Try to get from cache first
+    try {
+      const cachedResult = await getCachedValue(cacheKey);
+      if (cachedResult) {
+        console.log(`📦 Cache HIT for ${cacheKey}`);
+        return cachedResult;
+      }
+    } catch (err) {
+      console.warn('Cache retrieval error, proceeding with DB query:', err.message);
+    }
+
+    // If not in cache, execute the aggregation pipeline
     const pipeline = [
       { $match: query },
       {
@@ -275,7 +293,7 @@ export class VideoService {
 
     const withUrls = attachMediaUrlsMany(populated);
 
-    return {
+    const result = {
       videos: withUrls,
       pagination: {
         total: count,
@@ -284,6 +302,16 @@ export class VideoService {
         pages: Math.ceil(count / limit) || 1,
       },
     };
+
+    // Cache the result for 5 minutes (300 seconds)
+    try {
+      await setCachedValue(cacheKey, result, 300);
+      console.log(`💾 Cached trending feed for ${limit} videos at offset ${skip}`);
+    } catch (err) {
+      console.warn('Cache set error, but returning result:', err.message);
+    }
+
+    return result;
   }
 
   static async getFollowingFeed(userId, filters = {}) {
@@ -399,7 +427,7 @@ export class VideoService {
   static async incrementLikes(videoId) {
     const video = await Video.findByIdAndUpdate(
       videoId,
-      { $inc: { likesCount: 1 } },
+      { $inc: { likesCount: 1, trendingScore: 10 } },
       { new: true }
     );
 
@@ -409,7 +437,7 @@ export class VideoService {
   static async decrementLikes(videoId) {
     const video = await Video.findByIdAndUpdate(
       videoId,
-      { $inc: { likesCount: -1 } },
+      { $inc: { likesCount: -1, trendingScore: -10 } },
       { new: true }
     );
 
