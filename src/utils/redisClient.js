@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 
 let redisClient = null;
-let redisConnectionFailed = false; // Flag to prevent repeated errors
+let redisConnectionFailed = false;
 const MAX_CONNECT_ATTEMPTS = 3;
 
 export async function getRedisClient() {
@@ -12,26 +12,21 @@ export async function getRedisClient() {
       url: redisUrl,
       socket: {
         reconnectStrategy: () => {
-          // Don't reconnect if connection has already failed
           if (redisConnectionFailed) {
             return new Error('Redis connection disabled');
           }
-          // Fail fast on first attempt
           return new Error('Initial connection failed');
         },
-        connectTimeout: 5000, // 5 second timeout for initial connection
+        connectTimeout: 5000,
       },
     });
 
-    // Only attach listeners if connection succeeds
     const handleConnect = () => {
       console.log('✓ Redis Client Connected');
     };
 
     const handleError = (err) => {
-      // Silently ignore errors once connection has failed
       if (!redisConnectionFailed) {
-        // Only log first error
       }
     };
 
@@ -39,7 +34,6 @@ export async function getRedisClient() {
     redisClient.on('error', handleError);
 
     try {
-      // Try to connect with a timeout
       const connectionPromise = redisClient.connect();
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Redis connection timeout')), 8000)
@@ -48,14 +42,12 @@ export async function getRedisClient() {
       await Promise.race([connectionPromise, timeoutPromise]);
       return redisClient;
     } catch (err) {
-      redisConnectionFailed = true; // Flag to prevent future attempts
+      redisConnectionFailed = true;
       
-      // Remove listeners and cleanup
       if (redisClient) {
         try {
           redisClient.removeAllListeners();
         } catch (e) {
-          // Ignore listener removal errors
         }
       }
       

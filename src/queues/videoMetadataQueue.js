@@ -3,7 +3,6 @@ import { getRedisClient } from '../utils/redisClient.js';
 import { Video } from '../db_core/models/Video.js';
 import { probeVideoDurationSeconds } from '../utils/videoProbe.js';
 
-// Video Metadata Queue definition
 export async function createVideoMetadataQueue() {
   const connection = await getRedisClient();
 
@@ -16,15 +15,14 @@ export async function createVideoMetadataQueue() {
         delay: 2000,
       },
       removeOnComplete: {
-        age: 3600, // Keep completed jobs for 1 hour
+        age: 3600,
       },
       removeOnFail: {
-        age: 86400, // Keep failed jobs for 24 hours
+        age: 86400,
       },
     },
   });
 
-  // Log queue events
   videoMetadataQueue.on('completed', (job) => {
     console.log(`✓ Video metadata job ${job.id} completed`);
   });
@@ -40,13 +38,6 @@ export async function createVideoMetadataQueue() {
   return videoMetadataQueue;
 }
 
-/**
- * Add a video metadata processing job to the queue
- * @param {Object} data - Video data
- * @param {string} data.videoId - Video MongoDB ID
- * @param {string} data.videoPath - Path to video file
- * @param {Object} options - BullMQ options
- */
 export async function addVideoMetadataJob(data, options = {}) {
   try {
     const videoMetadataQueue = await createVideoMetadataQueue();
@@ -62,10 +53,6 @@ export async function addVideoMetadataJob(data, options = {}) {
   }
 }
 
-/**
- * Create video metadata worker for processing jobs
- * This should be called in the worker process
- */
 export async function createVideoMetadataWorker() {
   const connection = await getRedisClient();
 
@@ -75,7 +62,6 @@ export async function createVideoMetadataWorker() {
       const { videoId, videoPath } = job.data;
 
       try {
-        // Example: Extract and verify video duration
         const durationSeconds = await probeVideoDurationSeconds(videoPath);
 
         // Update video with metadata

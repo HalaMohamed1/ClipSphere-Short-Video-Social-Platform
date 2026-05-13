@@ -58,7 +58,6 @@ async function startWorkerProcess() {
     console.log('✓ Worker Process Ready - Listening for Jobs');
     console.log('═══════════════════════════════════════════════════════════════\n');
 
-    // Graceful shutdown
     process.on('SIGINT', async () => {
       console.log('\n\n⚠️  Shutting down worker process...');
 
