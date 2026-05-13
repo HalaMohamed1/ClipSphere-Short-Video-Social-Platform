@@ -15,7 +15,12 @@ export const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error(`❌ MongoDB connection error: ${error.message}`);
-    process.exit(1);
+    if (process.env.NODE_ENV === 'production') {
+      console.error('FATAL: MongoDB is required in production.');
+      process.exit(1);
+    }
+    console.warn('⚠️  Continuing without database connection. Start MongoDB: docker compose up -d database');
+    return null;
   }
 };
 

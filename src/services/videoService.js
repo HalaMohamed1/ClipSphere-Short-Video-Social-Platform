@@ -226,7 +226,6 @@ export class VideoService {
 
     // Try to get from cache first
     try {
-    try {
       const cachedResult = await getCachedValue(cacheKey);
       if (cachedResult) {
         console.log(`📦 Cache HIT for ${cacheKey}`);
@@ -236,6 +235,7 @@ export class VideoService {
       console.warn('Cache retrieval error, proceeding with DB query:', err.message);
     }
 
+    const pipeline = [
       {
         $lookup: {
           from: 'reviews',
@@ -300,6 +300,7 @@ export class VideoService {
 
     // Cache the result for 5 minutes (300 seconds)
     try {
+      await setCachedValue(cacheKey, result, 300);
       console.log(`💾 Cached trending feed for ${limit} videos at offset ${skip}`);
     } catch (err) {
       console.warn('Cache set error, but returning result:', err.message);

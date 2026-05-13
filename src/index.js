@@ -115,44 +115,49 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.use(mongoSanitize());
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'ClipSphere API',
-      version: '1.0.0',
-      description: 'ClipSphere - Short Video Social Platform API Documentation',
-      contact: {
-        name: 'ClipSphere Team',
-      },
-    },
-    servers: [
-      {
-        url: process.env.SERVER_URL || 'http://localhost:5050',
-        description: 'Development Server',
-      },
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'JWT Authorization header. Format: Bearer <token>',
+let swaggerSpec = {};
+try {
+  const swaggerOptions = {
+    definition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'ClipSphere API',
+        version: '1.0.0',
+        description: 'ClipSphere - Short Video Social Platform API Documentation',
+        contact: {
+          name: 'ClipSphere Team',
         },
       },
-    },
-    security: [
-      {
-        bearerAuth: [],
+      servers: [
+        {
+          url: process.env.SERVER_URL || 'http://localhost:5050',
+          description: 'Development Server',
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: 'JWT Authorization header. Format: Bearer <token>',
+          },
+        },
       },
-    ],
-  },
-  apis: ['./src/docs/openapi/*.swagger.js'],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+    },
+    apis: [],
+  };
+  swaggerSpec = swaggerJsdoc(swaggerOptions);
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  console.log('✓ Swagger documentation loaded');
+} catch (err) {
+  console.warn('⚠️  Swagger initialization failed (optional):', err.message);
+}
 
 app.get('/health', (req, res) => {
   res.status(200).json({
