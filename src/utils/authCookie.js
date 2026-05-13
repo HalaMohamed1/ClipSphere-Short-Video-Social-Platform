@@ -2,9 +2,16 @@
 export function getAuthCookieOptions() {
   const maxAgeMs = parseJwtExpireToMs(process.env.JWT_EXPIRE || '24h');
 
+  // COOKIE_SECURE can override the default (production=true) —
+  // set it to 'false' when running behind an HTTP-only reverse proxy (e.g. Docker without TLS).
+  const secure =
+    process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production';
+
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     sameSite: 'lax',
     path: '/',
     maxAge: maxAgeMs,

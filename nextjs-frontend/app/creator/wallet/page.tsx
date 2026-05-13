@@ -189,13 +189,6 @@ export default function CreatorWalletPage() {
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-100 mb-1">Tips & wallet</h1>
-        <p className="text-sm text-zinc-500">
-          Tips use Stripe test mode. Returning from Stripe with <code className="text-zinc-400">?session_id=</code>{" "}
-          runs a one-time sync. If balances stay at $0, use <strong>Finalize</strong> on a pending row (paid in
-          Checkout but no webhook yet), or verify <code className="text-zinc-400">stripe listen</code> forwards to your
-          API port and <code className="text-zinc-400">STRIPE_WEBHOOK_SECRET</code> matches the CLI{" "}
-          <code className="text-zinc-400">whsec_…</code> value.
-        </p>
       </div>
 
       {stripeReturnBanner === "confirming" && (
@@ -251,11 +244,6 @@ export default function CreatorWalletPage() {
 
       <div>
         <h2 className="text-lg font-medium text-zinc-200 mb-1">Transaction history</h2>
-        <p className="text-xs text-zinc-500 mb-4">
-          Stuck <span className="text-amber-500/90">pending</span> after you completed payment? Press{" "}
-          <strong>Finalize</strong> — it uses the Checkout session id stored on that row (same as the redirect
-          sync).
-        </p>
         {loading && transactions.length === 0 ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
