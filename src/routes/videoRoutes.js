@@ -2,6 +2,7 @@ import express from 'express';
 import { VideoController } from '../controllers/videoController.js';
 import { ReviewController } from '../controllers/reviewController.js';
 import { LikeController } from '../controllers/likeController.js';
+import { EnhancedController } from '../controllers/enhancedController.js';
 import { protect, optionalAuth } from '../middleware/auth.js';
 import { loadVideo, assertVideoOwner, assertVideoOwnerOrAdmin } from '../middleware/ownership.js';
 import { uploadVideoFile } from '../middleware/uploadVideo.js';
@@ -17,7 +18,7 @@ router.post(
   VideoController.uploadVideo
 );
 router.post('/', protect, VideoController.createVideo);
-router.get('/feed/following', protect, VideoController.getFollowingFeed);
+router.get('/feed/following', protect, EnhancedController.getEnhancedFeed);
 router.get('/', VideoController.getPublicVideos);
 router.get('/user/liked-videos', protect, LikeController.getUserLikedVideos);
 
@@ -45,7 +46,7 @@ router.delete(
   VideoController.deleteVideo
 );
 
-router.post('/:videoId/reviews', protect, ReviewController.createReview);
+router.post('/:videoId/reviews', protect, EnhancedController.createReview);
 router.get('/:videoId/reviews', ReviewController.getVideoReviews);
 router.get('/:videoId/reviews/me', protect, ReviewController.getUserVideoReview);
 router.patch('/reviews/:id', protect, ReviewController.updateReview);

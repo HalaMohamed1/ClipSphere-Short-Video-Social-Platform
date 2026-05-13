@@ -72,6 +72,11 @@ const videoSchema = new mongoose.Schema(
          validator: (tags) => tags.length <= 10,
          message: 'A video can only have up to 10 tags'
        }
+    },
+    trendingScore: {
+      type: Number,
+      default: 0,
+      index: true
     }
   },
   {
