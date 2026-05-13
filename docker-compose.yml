@@ -100,7 +100,7 @@ services:
       REDIS_URL:     redis://cache:6379
       MINIO_ENDPOINT:           http://storage:9000
       MINIO_REGION:             ${MINIO_REGION:-us-east-1}
-      MINIO_ACCESS_KEY:         ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ACCESS_KEY:         ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY:         ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET_VIDEOS:      ${MINIO_BUCKET_VIDEOS:-clipsphere-videos}
       MINIO_BUCKET_THUMBNAILS:  ${MINIO_BUCKET_THUMBNAILS:-clipsphere-thumbnails}
