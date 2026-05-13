@@ -236,6 +236,7 @@ export class VideoService {
     }
 
     const pipeline = [
+      { $match: query },
       {
         $lookup: {
           from: 'reviews',
