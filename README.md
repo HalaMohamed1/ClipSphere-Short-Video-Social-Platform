@@ -1,7 +1,7 @@
-# ClipSphere 
+# ClipSphere Backend - Person 2 (Sections 2 & 7)
 
 ## Overview
-This is the implementation of the ClipSphere short video social platform.
+This is the implementation of **Section 2 (Secure Identity Management)** and **Section 7 (Admin Oversight & Analytics)** for the ClipSphere short video social platform.
 
 ## Project Structure
 
