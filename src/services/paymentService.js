@@ -289,12 +289,26 @@ export class PaymentService {
       throw new AppError('User not found', 404);
     }
 
+    const uid = new mongoose.Types.ObjectId(userId);
+
+    // Derive balance from the ledger — the denormalized walletBalance field can drift
+    // (e.g. completed on a different DB instance). This self-heals on every load.
+    const completedAgg = await Transaction.aggregate([
+      { $match: { recipient: uid, status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]);
+    const trueBalance = completedAgg[0]?.total ?? 0;
+
+    if (trueBalance !== (user.walletBalance ?? 0)) {
+      await User.findByIdAndUpdate(userId, { walletBalance: trueBalance });
+    }
+
     const pendingAgg = await Transaction.getPendingBalanceByCreator(userId);
     const pendingRow =
       Array.isArray(pendingAgg) && pendingAgg.length > 0 ? pendingAgg[0] : null;
 
     return {
-      walletBalanceCents: user.walletBalance ?? 0,
+      walletBalanceCents: trueBalance,
       pendingTipsCents: pendingRow?.totalPendingBalance ?? 0,
       pendingTransactionCount: pendingRow?.transactionCount ?? 0,
     };
