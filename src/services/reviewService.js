@@ -4,6 +4,7 @@ import { User } from '../db_core/models/User.js';
 import { AppError } from '../utils/appError.js';
 import { sendEngagementNotification } from '../utils/engagementNotificationUtil.js';
 import { emitNewReview } from '../io/socketManager.js';
+import { VideoService } from './videoService.js';
 
 export class ReviewService {
   static async createReview(reviewData) {
@@ -46,6 +47,9 @@ export class ReviewService {
         videoTitle: video.title,
       });
     }
+
+    // Bonus: Update trendingScore based on new average rating
+    await VideoService.updateTrendingScoreFromReviews(reviewData.video);
 
     return populatedReview;
   }
@@ -115,6 +119,9 @@ export class ReviewService {
       throw new AppError('Review not found', 404);
     }
 
+    // Bonus: Recalculate trendingScore when review is updated
+    await VideoService.updateTrendingScoreFromReviews(review.video._id);
+
     return review;
   }
 
@@ -124,6 +131,9 @@ export class ReviewService {
     if (!review) {
       throw new AppError('Review not found', 404);
     }
+
+    // Bonus: Recalculate trendingScore when review is deleted
+    await VideoService.updateTrendingScoreFromReviews(review.video);
 
     return review;
   }
