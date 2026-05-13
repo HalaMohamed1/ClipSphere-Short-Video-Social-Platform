@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node --dns-result-order=ipv4first src/index.js",
-    "dev": "nodemon --exec \"node --dns-result-order=ipv4first\" src/index.js",
+    "dev": "nodemon --watch src --ignore node_modules --exec \"node --dns-result-order=ipv4first\" src/index.js",
     "worker": "node --dns-result-order=ipv4first src/worker.js",
-    "worker:dev": "nodemon --exec \"node --dns-result-order=ipv4first\" src/worker.js",
+    "worker:dev": "nodemon --watch src --ignore node_modules --exec \"node --dns-result-order=ipv4first\" src/worker.js",
     "test": "jest"
   },
   "keywords": [
