@@ -10,6 +10,7 @@ import { uploadLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
+// Place specific routes BEFORE generic /:id routes to avoid path conflicts
 router.post(
   '/upload',
   protect,
@@ -18,17 +19,23 @@ router.post(
   VideoController.uploadVideo
 );
 router.post('/', protect, VideoController.createVideo);
+
+// Specific feed endpoints (must come before /:id)
 router.get('/feed/following', protect, EnhancedController.getEnhancedFeed);
-router.get('/', VideoController.getPublicVideos);
 router.get('/user/liked-videos', protect, LikeController.getUserLikedVideos);
 
+// Generic /videos endpoint
+router.get('/', VideoController.getPublicVideos);
+
+// Media streaming endpoints
 router.get('/:id/thumbnail', optionalAuth, VideoController.serveThumbnail);
 router.get('/:id/stream', optionalAuth, VideoController.streamVideo);
 
-router.get('/:id', VideoController.getVideoById);
-
-// Before PATCH /:id so paths like /:videoId/increment-views are not ambiguous
+// View count increment (must come before generic /:id)
 router.patch('/:videoId/increment-views', LikeController.incrementViewCount);
+
+// Video CRUD endpoints
+router.get('/:id', VideoController.getVideoById);
 
 router.patch(
   '/:id',
@@ -46,6 +53,7 @@ router.delete(
   VideoController.deleteVideo
 );
 
+// Review routes
 router.post('/:videoId/reviews', protect, EnhancedController.createReview);
 router.get('/:videoId/reviews', ReviewController.getVideoReviews);
 router.get('/:videoId/reviews/me', protect, ReviewController.getUserVideoReview);

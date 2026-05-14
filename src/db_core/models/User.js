@@ -133,4 +133,12 @@ userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// toJSON method to exclude sensitive fields
+userSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password;
+  delete obj.active;
+  return obj;
+};
+
 export const User = mongoose.model('User', userSchema);

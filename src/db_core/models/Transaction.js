@@ -31,6 +31,18 @@ const transactionSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Index for efficient filtering by status and creation date
+transactionSchema.index({ status: 1, createdAt: -1 });
+
+// Index for efficient querying by sender
+transactionSchema.index({ sender: 1, createdAt: -1 });
+
+// Index for efficient querying by recipient
+transactionSchema.index({ recipient: 1, createdAt: -1 });
+
+// Unique index on stripePaymentId (enforces uniqueness)
+transactionSchema.index({ stripePaymentId: 1 }, { unique: true });
+
 transactionSchema.statics.getPendingBalanceByCreator = async function(creatorId) {
     return this.aggregate([
         {

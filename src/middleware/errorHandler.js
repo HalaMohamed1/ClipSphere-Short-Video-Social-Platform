@@ -3,7 +3,7 @@ import { AppError } from '../utils/appError.js';
 // Global error handling middleware
 export const globalErrorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  err.status = err.status || (err.statusCode < 500 ? 'fail' : 'error');
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {

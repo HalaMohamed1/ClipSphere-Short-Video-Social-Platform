@@ -128,11 +128,14 @@ export class AuthService {
     }
 
     if (preferences.notificationPreferences) {
-      const inc = preferences.notificationPreferences;
-      const cur = user.notificationPreferences || {};
+      const prefs = preferences.notificationPreferences;
+      const current = user.notificationPreferences || {};
+      
       user.notificationPreferences = {
-        inApp: { ...(cur.inApp || {}), ...(inc.inApp || {}) },
-        email: { ...(cur.email || {}), ...(inc.email || {}) },
+        emailOnNewEngagement: prefs.emailOnNewEngagement !== undefined ? prefs.emailOnNewEngagement : current.emailOnNewEngagement,
+        emailOnWelcome: prefs.emailOnWelcome !== undefined ? prefs.emailOnWelcome : current.emailOnWelcome,
+        inAppOnNewEngagement: prefs.inAppOnNewEngagement !== undefined ? prefs.inAppOnNewEngagement : current.inAppOnNewEngagement,
+        inAppOnWelcome: prefs.inAppOnWelcome !== undefined ? prefs.inAppOnWelcome : current.inAppOnWelcome,
       };
     }
 

@@ -1,28 +1,24 @@
-const DEFAULT_IN_APP = {
-  followers: true,
-  comments: true,
-  likes: true,
-  tips: true,
-  welcome: true,
-};
-
-const DEFAULT_EMAIL = {
-  followers: false,
-  comments: false,
-  likes: false,
-  tips: false,
-  welcome: true,
-};
-
 export function resolveNotificationChannels(targetUser, eventKey) {
-  const inApp = targetUser.notificationPreferences?.inApp;
-  const email = targetUser.notificationPreferences?.email;
-
-  const shouldNotifyInApp =
-    inApp?.[eventKey] !== undefined ? inApp[eventKey] : DEFAULT_IN_APP[eventKey];
-
-  const shouldQueueEmail =
-    email?.[eventKey] !== undefined ? email[eventKey] : DEFAULT_EMAIL[eventKey];
-
+  const prefs = targetUser.notificationPreferences || {};
+  
+  // Map event keys to notification preference fields
+  // eventKey: 'welcome' -> emailOnWelcome, inAppOnWelcome
+  // eventKey: 'likes' -> emailOnNewEngagement, inAppOnNewEngagement
+  // eventKey: 'comments' -> emailOnNewEngagement, inAppOnNewEngagement
+  // eventKey: 'followers' -> emailOnNewEngagement, inAppOnNewEngagement
+  // eventKey: 'tips' -> emailOnNewEngagement, inAppOnNewEngagement
+  
+  let shouldQueueEmail = true;
+  let shouldNotifyInApp = true;
+  
+  if (eventKey === 'welcome') {
+    shouldQueueEmail = prefs.emailOnWelcome !== false;
+    shouldNotifyInApp = prefs.inAppOnWelcome !== false;
+  } else {
+    // All other events (likes, comments, followers, tips) use engagement preferences
+    shouldQueueEmail = prefs.emailOnNewEngagement !== false;
+    shouldNotifyInApp = prefs.inAppOnNewEngagement !== false;
+  }
+  
   return { shouldNotifyInApp, shouldQueueEmail };
 }

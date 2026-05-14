@@ -58,7 +58,7 @@ export class AuthController {
   static updateMe = catchAsync(async (req, res) => {
     const validatedData = updateUserSchema.parse(req.body);
 
-    const user = await AuthService.updateProfile(req.user.id, validatedData);
+    const user = await AuthService.updateProfile(req.user._id, validatedData);
 
     res.status(200).json({
       status: 'success',
@@ -88,7 +88,7 @@ export class AuthController {
   static updatePreferences = catchAsync(async (req, res) => {
     const validatedData = updatePreferencesSchema.parse(req.body);
 
-    const user = await AuthService.updatePreferences(req.user.id, validatedData);
+    const user = await AuthService.updatePreferences(req.user._id, validatedData);
 
     res.status(200).json({
       status: 'success',

@@ -68,10 +68,7 @@ export class ReviewController {
     const review = await ReviewService.getReviewById(id);
 
     if (review.user._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        status: 'fail',
-        message: 'You are not authorized to update this review',
-      });
+      throw new AppError('You are not authorized to update this review', 403);
     }
 
     const validatedData = updateReviewSchema.parse(req.body);
@@ -91,10 +88,7 @@ export class ReviewController {
     const review = await ReviewService.getReviewById(id);
 
     if (review.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({
-        status: 'fail',
-        message: 'You are not authorized to delete this review',
-      });
+      throw new AppError('You are not authorized to delete this review', 403);
     }
 
     await ReviewService.deleteReview(id);

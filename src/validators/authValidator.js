@@ -44,18 +44,10 @@ export const updateUserSchema = z.object({
 export const updatePreferencesSchema = z.object({
   notificationPreferences: z
     .object({
-      inApp: z.object({
-        followers: z.boolean().optional(),
-        comments: z.boolean().optional(),
-        likes: z.boolean().optional(),
-        tips: z.boolean().optional(),
-      }).optional(),
-      email: z.object({
-        followers: z.boolean().optional(),
-        comments: z.boolean().optional(),
-        likes: z.boolean().optional(),
-        tips: z.boolean().optional(),
-      }).optional(),
+      emailOnNewEngagement: z.boolean().optional(),
+      emailOnWelcome: z.boolean().optional(),
+      inAppOnNewEngagement: z.boolean().optional(),
+      inAppOnWelcome: z.boolean().optional(),
     })
     .optional(),
 });
